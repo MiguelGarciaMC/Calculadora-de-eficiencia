@@ -32,13 +32,13 @@
             boton_cargar = new Button();
             panel_inicio = new Panel();
             panel_archivo = new Panel();
+            boton_regresar = new Button();
+            label_resultado = new Label();
+            boton_descargar = new Button();
+            boton_evaluar = new Button();
             label_nombre_archivo = new Label();
             label_descripcion = new Label();
             label_titulo = new Label();
-            boton_evaluar = new Button();
-            boton_descargar = new Button();
-            label_resultado = new Label();
-            boton_regresar = new Button();
             ((System.ComponentModel.ISupportInitialize)imagen_titulo).BeginInit();
             panel_inicio.SuspendLayout();
             panel_archivo.SuspendLayout();
@@ -83,10 +83,46 @@
             panel_archivo.Controls.Add(boton_descargar);
             panel_archivo.Controls.Add(boton_evaluar);
             panel_archivo.Controls.Add(label_nombre_archivo);
-            panel_archivo.Location = new Point(3, 0);
+            panel_archivo.Location = new Point(3, 3);
             panel_archivo.Name = "panel_archivo";
             panel_archivo.Size = new Size(801, 452);
             panel_archivo.TabIndex = 7;
+            // 
+            // boton_regresar
+            // 
+            boton_regresar.Location = new Point(335, 377);
+            boton_regresar.Name = "boton_regresar";
+            boton_regresar.Size = new Size(75, 23);
+            boton_regresar.TabIndex = 4;
+            boton_regresar.Text = "Regresar";
+            boton_regresar.UseVisualStyleBackColor = true;
+            // 
+            // label_resultado
+            // 
+            label_resultado.AutoSize = true;
+            label_resultado.Location = new Point(91, 230);
+            label_resultado.Name = "label_resultado";
+            label_resultado.Size = new Size(59, 15);
+            label_resultado.TabIndex = 3;
+            label_resultado.Text = "Resultado";
+            // 
+            // boton_descargar
+            // 
+            boton_descargar.Location = new Point(505, 230);
+            boton_descargar.Name = "boton_descargar";
+            boton_descargar.Size = new Size(183, 23);
+            boton_descargar.TabIndex = 2;
+            boton_descargar.Text = "Descargar txt con resultado";
+            boton_descargar.UseVisualStyleBackColor = true;
+            // 
+            // boton_evaluar
+            // 
+            boton_evaluar.Location = new Point(335, 100);
+            boton_evaluar.Name = "boton_evaluar";
+            boton_evaluar.Size = new Size(75, 23);
+            boton_evaluar.TabIndex = 1;
+            boton_evaluar.Text = "Evaluar";
+            boton_evaluar.UseVisualStyleBackColor = true;
             // 
             // label_nombre_archivo
             // 
@@ -115,42 +151,6 @@
             label_titulo.TabIndex = 4;
             label_titulo.Text = "!Bienvenido a nuesta calculadora de eficiencia!";
             // 
-            // boton_evaluar
-            // 
-            boton_evaluar.Location = new Point(335, 100);
-            boton_evaluar.Name = "boton_evaluar";
-            boton_evaluar.Size = new Size(75, 23);
-            boton_evaluar.TabIndex = 1;
-            boton_evaluar.Text = "Evaluar";
-            boton_evaluar.UseVisualStyleBackColor = true;
-            // 
-            // boton_descargar
-            // 
-            boton_descargar.Location = new Point(505, 230);
-            boton_descargar.Name = "boton_descargar";
-            boton_descargar.Size = new Size(151, 23);
-            boton_descargar.TabIndex = 2;
-            boton_descargar.Text = "Descargar txt con resultado";
-            boton_descargar.UseVisualStyleBackColor = true;
-            // 
-            // label_resultado
-            // 
-            label_resultado.AutoSize = true;
-            label_resultado.Location = new Point(91, 230);
-            label_resultado.Name = "label_resultado";
-            label_resultado.Size = new Size(59, 15);
-            label_resultado.TabIndex = 3;
-            label_resultado.Text = "Resultado";
-            // 
-            // boton_regresar
-            // 
-            boton_regresar.Location = new Point(335, 377);
-            boton_regresar.Name = "boton_regresar";
-            boton_regresar.Size = new Size(75, 23);
-            boton_regresar.TabIndex = 4;
-            boton_regresar.Text = "Regresar";
-            boton_regresar.UseVisualStyleBackColor = true;
-            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -160,6 +160,7 @@
             Controls.Add(panel_inicio);
             Name = "Form1";
             Text = "Form1";
+            Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)imagen_titulo).EndInit();
             panel_inicio.ResumeLayout(false);
             panel_archivo.ResumeLayout(false);
