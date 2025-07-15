@@ -31,6 +31,9 @@ namespace Calculadora_de_eficiencia.Validation
             bool contieneConsoleWriteAsync = contenido.Contains("Console.WriteAsync");
             bool contieneConsoleBeep = contenido.Contains("Console.Beep");
             bool contieneConsoleClear = contenido.Contains("Console.Clear");
+            bool contieneWebApplication = contenido.Contains("WebApplicaion.CreateBuilder");
+            bool contieneBuilderServices = contenido.Contains("builder.Services.AddRazorPages");
+            bool contieneAppRun = contenido.Contains("app.Run");
 
             int indicadoresDetectados = 0;
             if (contieneUsing) indicadoresDetectados++;
@@ -44,6 +47,9 @@ namespace Calculadora_de_eficiencia.Validation
             if (contieneConsoleWriteAsync) indicadoresDetectados++;
             if (contieneConsoleBeep) indicadoresDetectados++;
             if (contieneConsoleClear) indicadoresDetectados++;
+            if (contieneWebApplication) indicadoresDetectados++;
+            if (contieneBuilderServices) indicadoresDetectados++;
+            if (contieneAppRun) indicadoresDetectados++;
 
             // Considerar como C# si encuentra al menos 2 de los 3 elementos.
             return indicadoresDetectados >= 2;
