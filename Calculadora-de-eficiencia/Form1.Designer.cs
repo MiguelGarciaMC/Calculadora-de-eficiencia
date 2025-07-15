@@ -34,11 +34,11 @@
             label_titulo = new Label();
             label_descripcion = new Label();
             panel_archivo = new Panel();
+            boton_regresar = new Button();
             boton_evaluar = new Button();
             laber_resultado = new Label();
             boton_archivo = new Button();
             label_descargarArchivo = new Label();
-            boton_regresar = new Button();
             ((System.ComponentModel.ISupportInitialize)imagen_titulo).BeginInit();
             panel_inicio.SuspendLayout();
             panel_archivo.SuspendLayout();
@@ -95,6 +95,7 @@
             // 
             // panel_archivo
             // 
+            panel_archivo.BackColor = SystemColors.Window;
             panel_archivo.Controls.Add(boton_evaluar);
             panel_archivo.Controls.Add(laber_resultado);
             panel_archivo.Controls.Add(boton_archivo);
@@ -105,6 +106,16 @@
             panel_archivo.Size = new Size(801, 452);
             panel_archivo.TabIndex = 6;
             panel_archivo.Visible = false;
+            // 
+            // boton_regresar
+            // 
+            boton_regresar.Location = new Point(336, 357);
+            boton_regresar.Name = "boton_regresar";
+            boton_regresar.Size = new Size(75, 23);
+            boton_regresar.TabIndex = 0;
+            boton_regresar.Text = "Regresar";
+            boton_regresar.UseVisualStyleBackColor = true;
+            boton_regresar.Click += boton_regresar_Click_1;
             // 
             // boton_evaluar
             // 
@@ -142,16 +153,6 @@
             label_descargarArchivo.TabIndex = 1;
             label_descargarArchivo.Text = "Nombre del archivo...";
             // 
-            // boton_regresar
-            // 
-            boton_regresar.Location = new Point(336, 357);
-            boton_regresar.Name = "boton_regresar";
-            boton_regresar.Size = new Size(75, 23);
-            boton_regresar.TabIndex = 0;
-            boton_regresar.Text = "Regresar";
-            boton_regresar.UseVisualStyleBackColor = true;
-            boton_regresar.Click += boton_regresar_Click_1;
-            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -162,6 +163,7 @@
             Controls.Add(panel_inicio);
             Name = "Form1";
             Text = "Calculadora de eficiencia";
+            Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)imagen_titulo).EndInit();
             panel_inicio.ResumeLayout(false);
             panel_archivo.ResumeLayout(false);
