@@ -38,7 +38,6 @@ namespace Calculadora_de_eficiencia.Validation
             if (contieneConsoleWriteLine) indicadoresDetectados++;
             if (contieneConsoleWrite) indicadoresDetectados++;
             if (contieneConsoleReadLine) indicadoresDetectados++;
-            if (contieneConsoleWrite) indicadoresDetectados++;
             if (contieneConsoleErrorWriteLine) indicadoresDetectados++;
             if (contieneConsoleRead) indicadoresDetectados++;
             if (contieneConsoleReadKey) indicadoresDetectados++;
