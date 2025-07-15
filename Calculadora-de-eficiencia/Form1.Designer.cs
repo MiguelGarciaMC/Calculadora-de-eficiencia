@@ -34,11 +34,11 @@
             label_titulo = new Label();
             label_descripcion = new Label();
             panel_archivo = new Panel();
-            boton_regresar = new Button();
-            label_descargarArchivo = new Label();
-            boton_archivo = new Button();
-            laber_resultado = new Label();
             boton_evaluar = new Button();
+            laber_resultado = new Label();
+            boton_archivo = new Button();
+            label_descargarArchivo = new Label();
+            boton_regresar = new Button();
             ((System.ComponentModel.ISupportInitialize)imagen_titulo).BeginInit();
             panel_inicio.SuspendLayout();
             panel_archivo.SuspendLayout();
@@ -106,33 +106,14 @@
             panel_archivo.TabIndex = 6;
             panel_archivo.Visible = false;
             // 
-            // boton_regresar
+            // boton_evaluar
             // 
-            boton_regresar.Location = new Point(336, 357);
-            boton_regresar.Name = "boton_regresar";
-            boton_regresar.Size = new Size(75, 23);
-            boton_regresar.TabIndex = 0;
-            boton_regresar.Text = "Regresar";
-            boton_regresar.UseVisualStyleBackColor = true;
-            boton_regresar.Click += boton_regresar_Click_1;
-            // 
-            // label_descargarArchivo
-            // 
-            label_descargarArchivo.AutoSize = true;
-            label_descargarArchivo.Location = new Point(316, 44);
-            label_descargarArchivo.Name = "label_descargarArchivo";
-            label_descargarArchivo.Size = new Size(121, 15);
-            label_descargarArchivo.TabIndex = 1;
-            label_descargarArchivo.Text = "Nombre del archivo...";
-            // 
-            // boton_archivo
-            // 
-            boton_archivo.Location = new Point(624, 193);
-            boton_archivo.Name = "boton_archivo";
-            boton_archivo.Size = new Size(133, 23);
-            boton_archivo.TabIndex = 2;
-            boton_archivo.Text = "Descargar archivo txt";
-            boton_archivo.UseVisualStyleBackColor = true;
+            boton_evaluar.Location = new Point(334, 77);
+            boton_evaluar.Name = "boton_evaluar";
+            boton_evaluar.Size = new Size(75, 23);
+            boton_evaluar.TabIndex = 4;
+            boton_evaluar.Text = "Evaluar";
+            boton_evaluar.UseVisualStyleBackColor = true;
             // 
             // laber_resultado
             // 
@@ -143,14 +124,33 @@
             laber_resultado.TabIndex = 3;
             laber_resultado.Text = "Resultados";
             // 
-            // boton_evaluar
+            // boton_archivo
             // 
-            boton_evaluar.Location = new Point(334, 77);
-            boton_evaluar.Name = "boton_evaluar";
-            boton_evaluar.Size = new Size(75, 23);
-            boton_evaluar.TabIndex = 4;
-            boton_evaluar.Text = "Evaluar";
-            boton_evaluar.UseVisualStyleBackColor = true;
+            boton_archivo.Location = new Point(624, 193);
+            boton_archivo.Name = "boton_archivo";
+            boton_archivo.Size = new Size(133, 23);
+            boton_archivo.TabIndex = 2;
+            boton_archivo.Text = "Descargar archivo txt";
+            boton_archivo.UseVisualStyleBackColor = true;
+            // 
+            // label_descargarArchivo
+            // 
+            label_descargarArchivo.AutoSize = true;
+            label_descargarArchivo.Location = new Point(316, 44);
+            label_descargarArchivo.Name = "label_descargarArchivo";
+            label_descargarArchivo.Size = new Size(121, 15);
+            label_descargarArchivo.TabIndex = 1;
+            label_descargarArchivo.Text = "Nombre del archivo...";
+            // 
+            // boton_regresar
+            // 
+            boton_regresar.Location = new Point(336, 357);
+            boton_regresar.Name = "boton_regresar";
+            boton_regresar.Size = new Size(75, 23);
+            boton_regresar.TabIndex = 0;
+            boton_regresar.Text = "Regresar";
+            boton_regresar.UseVisualStyleBackColor = true;
+            boton_regresar.Click += boton_regresar_Click_1;
             // 
             // Form1
             // 
