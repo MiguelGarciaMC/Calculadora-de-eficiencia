@@ -31,14 +31,14 @@
             imagen_titulo = new PictureBox();
             boton_cargar = new Button();
             panel_inicio = new Panel();
+            label_titulo = new Label();
+            label_descripcion = new Label();
             panel_archivo = new Panel();
             boton_regresar = new Button();
-            label_resultado = new Label();
-            boton_descargar = new Button();
             boton_evaluar = new Button();
-            label_nombre_archivo = new Label();
-            label_descripcion = new Label();
-            label_titulo = new Label();
+            laber_resultado = new Label();
+            boton_archivo = new Button();
+            label_descargarArchivo = new Label();
             ((System.ComponentModel.ISupportInitialize)imagen_titulo).BeginInit();
             panel_inicio.SuspendLayout();
             panel_archivo.SuspendLayout();
@@ -62,85 +62,18 @@
             boton_cargar.TabIndex = 3;
             boton_cargar.Text = "Cargar archivo .CS";
             boton_cargar.UseVisualStyleBackColor = true;
+            boton_cargar.Click += boton_cargar_Click;
             // 
             // panel_inicio
             // 
-            panel_inicio.Controls.Add(panel_archivo);
-            panel_inicio.Controls.Add(label_descripcion);
             panel_inicio.Controls.Add(label_titulo);
+            panel_inicio.Controls.Add(label_descripcion);
             panel_inicio.Controls.Add(imagen_titulo);
             panel_inicio.Controls.Add(boton_cargar);
             panel_inicio.Location = new Point(-1, -1);
             panel_inicio.Name = "panel_inicio";
             panel_inicio.Size = new Size(801, 452);
             panel_inicio.TabIndex = 4;
-            // 
-            // panel_archivo
-            // 
-            panel_archivo.BackColor = SystemColors.Window;
-            panel_archivo.Controls.Add(boton_regresar);
-            panel_archivo.Controls.Add(label_resultado);
-            panel_archivo.Controls.Add(boton_descargar);
-            panel_archivo.Controls.Add(boton_evaluar);
-            panel_archivo.Controls.Add(label_nombre_archivo);
-            panel_archivo.Location = new Point(3, 3);
-            panel_archivo.Name = "panel_archivo";
-            panel_archivo.Size = new Size(801, 452);
-            panel_archivo.TabIndex = 7;
-            // 
-            // boton_regresar
-            // 
-            boton_regresar.Location = new Point(335, 377);
-            boton_regresar.Name = "boton_regresar";
-            boton_regresar.Size = new Size(75, 23);
-            boton_regresar.TabIndex = 4;
-            boton_regresar.Text = "Regresar";
-            boton_regresar.UseVisualStyleBackColor = true;
-            // 
-            // label_resultado
-            // 
-            label_resultado.AutoSize = true;
-            label_resultado.Location = new Point(91, 230);
-            label_resultado.Name = "label_resultado";
-            label_resultado.Size = new Size(59, 15);
-            label_resultado.TabIndex = 3;
-            label_resultado.Text = "Resultado";
-            // 
-            // boton_descargar
-            // 
-            boton_descargar.Location = new Point(505, 230);
-            boton_descargar.Name = "boton_descargar";
-            boton_descargar.Size = new Size(183, 23);
-            boton_descargar.TabIndex = 2;
-            boton_descargar.Text = "Descargar txt con resultado";
-            boton_descargar.UseVisualStyleBackColor = true;
-            // 
-            // boton_evaluar
-            // 
-            boton_evaluar.Location = new Point(335, 100);
-            boton_evaluar.Name = "boton_evaluar";
-            boton_evaluar.Size = new Size(75, 23);
-            boton_evaluar.TabIndex = 1;
-            boton_evaluar.Text = "Evaluar";
-            boton_evaluar.UseVisualStyleBackColor = true;
-            // 
-            // label_nombre_archivo
-            // 
-            label_nombre_archivo.AutoSize = true;
-            label_nombre_archivo.Location = new Point(319, 54);
-            label_nombre_archivo.Name = "label_nombre_archivo";
-            label_nombre_archivo.Size = new Size(121, 15);
-            label_nombre_archivo.TabIndex = 0;
-            label_nombre_archivo.Text = "Nombre del archivo...";
-            // 
-            // label_descripcion
-            // 
-            label_descripcion.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label_descripcion.Location = new Point(21, 193);
-            label_descripcion.Name = "label_descripcion";
-            label_descripcion.Size = new Size(308, 122);
-            label_descripcion.TabIndex = 5;
-            label_descripcion.Text = "Esta herramienta ha sido creada para ayudarte a analizar el rendimiento y la complejidad de tus fragmentos de código para que puedas tener una idea clara de su eficiencia.";
             // 
             // label_titulo
             // 
@@ -151,15 +84,85 @@
             label_titulo.TabIndex = 4;
             label_titulo.Text = "!Bienvenido a nuesta calculadora de eficiencia!";
             // 
+            // label_descripcion
+            // 
+            label_descripcion.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label_descripcion.Location = new Point(21, 193);
+            label_descripcion.Name = "label_descripcion";
+            label_descripcion.Size = new Size(308, 122);
+            label_descripcion.TabIndex = 5;
+            label_descripcion.Text = "Esta herramienta ha sido creada para ayudarte a analizar el rendimiento y la complejidad de tus fragmentos de código para que puedas tener una idea clara de su eficiencia.";
+            // 
+            // panel_archivo
+            // 
+            panel_archivo.BackColor = SystemColors.Window;
+            panel_archivo.Controls.Add(boton_evaluar);
+            panel_archivo.Controls.Add(laber_resultado);
+            panel_archivo.Controls.Add(boton_archivo);
+            panel_archivo.Controls.Add(label_descargarArchivo);
+            panel_archivo.Controls.Add(boton_regresar);
+            panel_archivo.Location = new Point(0, 0);
+            panel_archivo.Name = "panel_archivo";
+            panel_archivo.Size = new Size(801, 452);
+            panel_archivo.TabIndex = 6;
+            panel_archivo.Visible = false;
+            // 
+            // boton_regresar
+            // 
+            boton_regresar.Location = new Point(336, 357);
+            boton_regresar.Name = "boton_regresar";
+            boton_regresar.Size = new Size(75, 23);
+            boton_regresar.TabIndex = 0;
+            boton_regresar.Text = "Regresar";
+            boton_regresar.UseVisualStyleBackColor = true;
+            boton_regresar.Click += boton_regresar_Click_1;
+            // 
+            // boton_evaluar
+            // 
+            boton_evaluar.Location = new Point(334, 77);
+            boton_evaluar.Name = "boton_evaluar";
+            boton_evaluar.Size = new Size(75, 23);
+            boton_evaluar.TabIndex = 4;
+            boton_evaluar.Text = "Evaluar";
+            boton_evaluar.UseVisualStyleBackColor = true;
+            // 
+            // laber_resultado
+            // 
+            laber_resultado.AutoSize = true;
+            laber_resultado.Location = new Point(44, 177);
+            laber_resultado.Name = "laber_resultado";
+            laber_resultado.Size = new Size(64, 15);
+            laber_resultado.TabIndex = 3;
+            laber_resultado.Text = "Resultados";
+            // 
+            // boton_archivo
+            // 
+            boton_archivo.Location = new Point(624, 193);
+            boton_archivo.Name = "boton_archivo";
+            boton_archivo.Size = new Size(133, 23);
+            boton_archivo.TabIndex = 2;
+            boton_archivo.Text = "Descargar archivo txt";
+            boton_archivo.UseVisualStyleBackColor = true;
+            // 
+            // label_descargarArchivo
+            // 
+            label_descargarArchivo.AutoSize = true;
+            label_descargarArchivo.Location = new Point(316, 44);
+            label_descargarArchivo.Name = "label_descargarArchivo";
+            label_descargarArchivo.Size = new Size(121, 15);
+            label_descargarArchivo.TabIndex = 1;
+            label_descargarArchivo.Text = "Nombre del archivo...";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.Window;
             ClientSize = new Size(800, 450);
+            Controls.Add(panel_archivo);
             Controls.Add(panel_inicio);
             Name = "Form1";
-            Text = "Form1";
+            Text = "Calculadora de eficiencia";
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)imagen_titulo).EndInit();
             panel_inicio.ResumeLayout(false);
@@ -179,10 +182,10 @@
         private Label label_titulo;
         private Label label_descripcion;
         private Panel panel_archivo;
-        private Label label_nombre_archivo;
-        private Button boton_evaluar;
         private Button boton_regresar;
-        private Label label_resultado;
-        private Button boton_descargar;
+        private Label label_descargarArchivo;
+        private Button boton_archivo;
+        private Label laber_resultado;
+        private Button boton_evaluar;
     }
 }
