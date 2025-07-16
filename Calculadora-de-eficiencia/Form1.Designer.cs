@@ -35,6 +35,7 @@
             label_titulo = new Label();
             label_descripcion = new Label();
             panel_archivo = new Panel();
+            richTextBox1 = new RichTextBox();
             pictureBox1 = new PictureBox();
             boton_evaluar = new Button();
             laber_resultado = new Label();
@@ -99,6 +100,7 @@
             // panel_archivo
             // 
             panel_archivo.BackColor = SystemColors.Window;
+            panel_archivo.Controls.Add(richTextBox1);
             panel_archivo.Controls.Add(pictureBox1);
             panel_archivo.Controls.Add(boton_evaluar);
             panel_archivo.Controls.Add(laber_resultado);
@@ -111,6 +113,15 @@
             panel_archivo.TabIndex = 6;
             panel_archivo.Visible = false;
             // 
+            // richTextBox1
+            // 
+            richTextBox1.EnableAutoDragDrop = true;
+            richTextBox1.Location = new Point(32, 147);
+            richTextBox1.Name = "richTextBox1";
+            richTextBox1.Size = new Size(168, 204);
+            richTextBox1.TabIndex = 6;
+            richTextBox1.Text = "";
+            // 
             // pictureBox1
             // 
             pictureBox1.Image = Properties.Resources.Captura_de_pantalla_2025_07_16_091731;
@@ -122,17 +133,18 @@
             // 
             // boton_evaluar
             // 
-            boton_evaluar.Location = new Point(334, 77);
+            boton_evaluar.Location = new Point(334, 104);
             boton_evaluar.Name = "boton_evaluar";
             boton_evaluar.Size = new Size(75, 23);
             boton_evaluar.TabIndex = 4;
             boton_evaluar.Text = "Evaluar";
             boton_evaluar.UseVisualStyleBackColor = true;
+            boton_evaluar.Click += boton_evaluar_Click;
             // 
             // laber_resultado
             // 
             laber_resultado.AutoSize = true;
-            laber_resultado.Location = new Point(44, 177);
+            laber_resultado.Location = new Point(86, 112);
             laber_resultado.Name = "laber_resultado";
             laber_resultado.Size = new Size(64, 15);
             laber_resultado.TabIndex = 3;
@@ -146,11 +158,12 @@
             boton_archivo.TabIndex = 2;
             boton_archivo.Text = "Descargar archivo txt";
             boton_archivo.UseVisualStyleBackColor = true;
+            boton_archivo.Click += boton_archivo_Click;
             // 
             // label_descargarArchivo
             // 
             label_descargarArchivo.AutoSize = true;
-            label_descargarArchivo.Location = new Point(316, 44);
+            label_descargarArchivo.Location = new Point(334, 53);
             label_descargarArchivo.Name = "label_descargarArchivo";
             label_descargarArchivo.Size = new Size(121, 15);
             label_descargarArchivo.TabIndex = 1;
@@ -203,5 +216,6 @@
         private Label laber_resultado;
         private Button boton_evaluar;
         private PictureBox pictureBox1;
+        private RichTextBox richTextBox1;
     }
 }
