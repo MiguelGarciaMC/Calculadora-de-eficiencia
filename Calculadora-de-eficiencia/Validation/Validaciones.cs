@@ -5,12 +5,9 @@ namespace Calculadora_de_eficiencia.Validation
 {
     internal static class Validaciones
     {
-        /// <summary>
-        /// Verifica si el contenido del archivo contiene elementos básicos de un código C#.
-        /// Busca using, namespace y Console.
-        /// </summary>
+        /// Coconi Verificar si el contenido del archivo en .cs contiene elementos básicos de un código C#.
+        /// Palabras clave Console.Clear,WebApplicaion.CreateBuilder,builder.Services.AddRazorPages,app.Run
         /// <param name="rutaArchivo">Ruta completa del archivo a analizar.</param>
-        /// <returns>True si parece código C#, False en caso contrario.</returns>
         public static bool EsCodigoCSharpBasico(string rutaArchivo)
         {
             if (!File.Exists(rutaArchivo))
@@ -51,7 +48,7 @@ namespace Calculadora_de_eficiencia.Validation
             if (contieneBuilderServices) indicadoresDetectados++;
             if (contieneAppRun) indicadoresDetectados++; 
 
-            // Considerar como C# si encuentra al menos 2 de los 3 elementos.
+            // si encuentra al menos 2 de los 3 elementos que contien un programa en C#.
             return indicadoresDetectados >= 2;
         } 
         //Validar que el documento no este vacío
