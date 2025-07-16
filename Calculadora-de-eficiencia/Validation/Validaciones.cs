@@ -49,7 +49,7 @@ namespace Calculadora_de_eficiencia.Validation
             if (contieneConsoleClear) indicadoresDetectados++;
             if (contieneWebApplication) indicadoresDetectados++;
             if (contieneBuilderServices) indicadoresDetectados++;
-            if (contieneAppRun) indicadoresDetectados++;
+            if (contieneAppRun) indicadoresDetectados++; 
 
             // Considerar como C# si encuentra al menos 2 de los 3 elementos.
             return indicadoresDetectados >= 2;
