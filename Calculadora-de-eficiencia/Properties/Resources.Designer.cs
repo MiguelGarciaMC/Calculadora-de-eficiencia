@@ -63,6 +63,16 @@ namespace Calculadora_de_eficiencia.Properties {
         /// <summary>
         ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Captura_de_pantalla_2025_07_16_091731 {
+            get {
+                object obj = ResourceManager.GetObject("Captura de pantalla 2025-07-16 091731", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Busca un recurso adaptado de tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Imagen_de_portada_removebg_preview {
             get {
                 object obj = ResourceManager.GetObject("Imagen_de_portada-removebg-preview", resourceCulture);

@@ -28,20 +28,23 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             imagen_titulo = new PictureBox();
             boton_cargar = new Button();
             panel_inicio = new Panel();
             label_titulo = new Label();
             label_descripcion = new Label();
             panel_archivo = new Panel();
-            boton_regresar = new Button();
+            pictureBox1 = new PictureBox();
             boton_evaluar = new Button();
             laber_resultado = new Label();
             boton_archivo = new Button();
             label_descargarArchivo = new Label();
+            boton_regresar = new Button();
             ((System.ComponentModel.ISupportInitialize)imagen_titulo).BeginInit();
             panel_inicio.SuspendLayout();
             panel_archivo.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
             // 
             // imagen_titulo
@@ -96,6 +99,7 @@
             // panel_archivo
             // 
             panel_archivo.BackColor = SystemColors.Window;
+            panel_archivo.Controls.Add(pictureBox1);
             panel_archivo.Controls.Add(boton_evaluar);
             panel_archivo.Controls.Add(laber_resultado);
             panel_archivo.Controls.Add(boton_archivo);
@@ -107,15 +111,14 @@
             panel_archivo.TabIndex = 6;
             panel_archivo.Visible = false;
             // 
-            // boton_regresar
+            // pictureBox1
             // 
-            boton_regresar.Location = new Point(336, 357);
-            boton_regresar.Name = "boton_regresar";
-            boton_regresar.Size = new Size(75, 23);
-            boton_regresar.TabIndex = 0;
-            boton_regresar.Text = "Regresar";
-            boton_regresar.UseVisualStyleBackColor = true;
-            boton_regresar.Click += boton_regresar_Click_1;
+            pictureBox1.Image = Properties.Resources.Captura_de_pantalla_2025_07_16_091731;
+            pictureBox1.Location = new Point(699, 12);
+            pictureBox1.Name = "pictureBox1";
+            pictureBox1.Size = new Size(87, 65);
+            pictureBox1.TabIndex = 5;
+            pictureBox1.TabStop = false;
             // 
             // boton_evaluar
             // 
@@ -153,6 +156,16 @@
             label_descargarArchivo.TabIndex = 1;
             label_descargarArchivo.Text = "Nombre del archivo...";
             // 
+            // boton_regresar
+            // 
+            boton_regresar.Location = new Point(336, 357);
+            boton_regresar.Name = "boton_regresar";
+            boton_regresar.Size = new Size(75, 23);
+            boton_regresar.TabIndex = 0;
+            boton_regresar.Text = "Regresar";
+            boton_regresar.UseVisualStyleBackColor = true;
+            boton_regresar.Click += boton_regresar_Click_1;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -161,6 +174,7 @@
             ClientSize = new Size(800, 450);
             Controls.Add(panel_archivo);
             Controls.Add(panel_inicio);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
             Text = "Calculadora de eficiencia";
             Load += Form1_Load;
@@ -168,6 +182,7 @@
             panel_inicio.ResumeLayout(false);
             panel_archivo.ResumeLayout(false);
             panel_archivo.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ResumeLayout(false);
         }
 
@@ -187,5 +202,6 @@
         private Button boton_archivo;
         private Label laber_resultado;
         private Button boton_evaluar;
+        private PictureBox pictureBox1;
     }
 }
