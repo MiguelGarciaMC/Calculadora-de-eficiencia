@@ -18,7 +18,8 @@ public class Asignacion
         { "aritmetica", "1" },
         { "logica", "1" },
         { "console_write", "1" },
-        { "comparacion", "1" }
+        { "comparacion", "1" },
+        { "acceso_arreglo", "1" }
     };
 
     public void Recorrer(SyntaxNode nodo)
@@ -130,6 +131,20 @@ public class Asignacion
         {
             // Recurse into the inner expression
             ProcesarExpresion(parentesis.Expression, resultado);
+        }
+        else if (expr is ElementAccessExpressionSyntax acceso)
+        {
+            ConsolaVirtual.Escribir($"[{acceso}] Detectado: acceso a arreglo ␦ valor: {valoresOperacion["acceso_arreglo"]}");
+            resultado.Add(valoresOperacion["acceso_arreglo"]);
+
+            // Analizar todos los índices dentro de los corchetes
+            foreach (var arg in acceso.ArgumentList.Arguments)
+            {
+                ProcesarExpresion(arg.Expression, resultado);
+            }
+
+            // Recurre sobre la expresión base (por ejemplo: tensor en tensor[1][2])
+            ProcesarExpresion(acceso.Expression, resultado);
         }
         else if (expr is BinaryExpressionSyntax bin)
         {
