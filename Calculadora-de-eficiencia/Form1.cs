@@ -1,4 +1,6 @@
+using Calculadora_de_eficiencia.Utils;
 using Calculadora_de_eficiencia.Validation;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Calculadora_de_eficiencia
 {
@@ -83,7 +85,6 @@ namespace Calculadora_de_eficiencia
 
         private void boton_evaluar_Click(object sender, EventArgs e)
         {
-            // Verifica que haya un archivo cargado
             if (string.IsNullOrEmpty(rutaArchivoCargado))
             {
                 MessageBox.Show("Primero debes cargar un archivo.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -92,19 +93,22 @@ namespace Calculadora_de_eficiencia
 
             try
             {
-                // Obtener resultados usando la clase Operaciones
-                var resultados = Calculadora_de_eficiencia.Services.Operaciones.ContarOperaciones(rutaArchivoCargado);
+                // Limpiar consola virtual
+                ConsolaVirtual.Limpiar();
 
-                // Limpiar el RichTextBox
+                // Obtener el árbol de sintaxis del archivo cargado
+                string codigoFuente = File.ReadAllText(rutaArchivoCargado);
+                var tree = CSharpSyntaxTree.ParseText(codigoFuente);
+                var root = tree.GetRoot();
+
+                // Ejecutar análisis
+                var analizador = new Asignacion();
+                analizador.Recorrer(root);
+
+                // Mostrar salida
                 richTextBox1.Clear();
-
-                // Mostrar los resultados
                 richTextBox1.AppendText("Resultados de operaciones encontradas:\n\n");
-
-                foreach (var item in resultados)
-                {
-                    richTextBox1.AppendText($"{item.Key}: {item.Value}\n");
-                }
+                richTextBox1.AppendText(ConsolaVirtual.ObtenerTodo());
             }
             catch (Exception ex)
             {
