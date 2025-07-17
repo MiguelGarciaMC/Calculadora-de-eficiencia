@@ -115,10 +115,9 @@
             // 
             // richTextBox1
             // 
-            richTextBox1.EnableAutoDragDrop = true;
             richTextBox1.Location = new Point(32, 147);
             richTextBox1.Name = "richTextBox1";
-            richTextBox1.Size = new Size(168, 204);
+            richTextBox1.Size = new Size(236, 233);
             richTextBox1.TabIndex = 6;
             richTextBox1.Text = "";
             // 
@@ -133,7 +132,7 @@
             // 
             // boton_evaluar
             // 
-            boton_evaluar.Location = new Point(334, 104);
+            boton_evaluar.Location = new Point(380, 92);
             boton_evaluar.Name = "boton_evaluar";
             boton_evaluar.Size = new Size(75, 23);
             boton_evaluar.TabIndex = 4;
@@ -162,12 +161,15 @@
             // 
             // label_descargarArchivo
             // 
+            label_descargarArchivo.AutoEllipsis = true;
             label_descargarArchivo.AutoSize = true;
-            label_descargarArchivo.Location = new Point(334, 53);
+            label_descargarArchivo.Font = new Font("Segoe UI Semibold", 14.25F, FontStyle.Bold | FontStyle.Italic, GraphicsUnit.Point, 0);
+            label_descargarArchivo.Location = new Point(334, 45);
             label_descargarArchivo.Name = "label_descargarArchivo";
-            label_descargarArchivo.Size = new Size(121, 15);
+            label_descargarArchivo.Size = new Size(198, 25);
             label_descargarArchivo.TabIndex = 1;
             label_descargarArchivo.Text = "Nombre del archivo...";
+            label_descargarArchivo.TextAlign = ContentAlignment.TopCenter;
             // 
             // boton_regresar
             // 
