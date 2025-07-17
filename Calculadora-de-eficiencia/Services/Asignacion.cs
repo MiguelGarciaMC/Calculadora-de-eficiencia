@@ -125,13 +125,19 @@ public class Asignacion
 
     private void ProcesarExpresion(ExpressionSyntax expr, List<string> resultado)
     {
-        if (expr is BinaryExpressionSyntax bin)
+        // ⚠️ Caso nuevo: paréntesis
+        if (expr is ParenthesizedExpressionSyntax parentesis)
         {
-            // Recorrer lado izquierdo y derecho primero (recursivamente)
+            // Recurse into the inner expression
+            ProcesarExpresion(parentesis.Expression, resultado);
+        }
+        else if (expr is BinaryExpressionSyntax bin)
+        {
+            // Recorrer lado izquierdo y derecho primero
             ProcesarExpresion(bin.Left, resultado);
             ProcesarExpresion(bin.Right, resultado);
 
-            // Luego determinar tipo de operación
+            // Clasificar tipo de operación
             if (bin.IsKind(SyntaxKind.AddExpression) ||
                 bin.IsKind(SyntaxKind.SubtractExpression) ||
                 bin.IsKind(SyntaxKind.MultiplyExpression) ||
@@ -157,7 +163,9 @@ public class Asignacion
                 resultado.Add(valoresOperacion["logica"]);
             }
         }
+        // Si quieres extender más tipos de expresiones, puedes seguir con otros `else if`
     }
+
 
     public void ResolverFormula(string expresion)
     {

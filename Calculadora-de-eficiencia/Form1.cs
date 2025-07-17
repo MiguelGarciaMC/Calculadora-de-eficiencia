@@ -81,6 +81,7 @@ namespace Calculadora_de_eficiencia
             panel_archivo.SendToBack();
             panel_inicio.Visible = true;
             panel_inicio.BringToFront();
+            richTextBox1.Clear();
         }
 
         private void boton_evaluar_Click(object sender, EventArgs e)
