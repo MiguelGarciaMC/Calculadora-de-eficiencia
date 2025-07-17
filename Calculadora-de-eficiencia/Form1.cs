@@ -9,6 +9,10 @@ namespace Calculadora_de_eficiencia
             InitializeComponent();
         }
 
+        //Variables de clase
+        private string rutaArchivoCargado;
+        private string contenidoArchivoCargado;
+
         private void Form1_Load(object sender, EventArgs e)
         {
             panel_archivo.Visible = false;
@@ -28,25 +32,28 @@ namespace Calculadora_de_eficiencia
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                string rutaArchivo = openFileDialog.FileName;
+                rutaArchivoCargado = openFileDialog.FileName;
                 string mensajeError;
 
                 // Validar que el archivo tiene contenido
-                if (!Validaciones.TieneContenido(rutaArchivo, out mensajeError))
+                if (!Validaciones.TieneContenido(rutaArchivoCargado, out mensajeError))
                 {
                     MessageBox.Show(mensajeError, "Archivo inválido", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
                 // Validar que el archivo parece código C#
-                if (!Validaciones.EsCodigoCSharpBasico(rutaArchivo))
+                if (!Validaciones.EsCodigoCSharpBasico(rutaArchivoCargado))
                 {
                     MessageBox.Show("El archivo no parece contener código C# válido.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
+                //Guardar contenido en memoria
+                contenidoArchivoCargado = File.ReadAllText(rutaArchivoCargado);
+
                 // Mostrar nombre del archivo
-                label_descargarArchivo.Text = Path.GetFileName(rutaArchivo);
+                label_descargarArchivo.Text = Path.GetFileName(rutaArchivoCargado);
 
                 // Cambiar al panel de archivo
                 panel_archivo.Visible = true;
@@ -55,7 +62,7 @@ namespace Calculadora_de_eficiencia
                 panel_inicio.SendToBack();
 
                 // Confirmación
-                MessageBox.Show("Archivo cargado con éxito:\n" + rutaArchivo, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Archivo cargado con éxito:\n" + rutaArchivoCargado, "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             else
             {
@@ -72,6 +79,79 @@ namespace Calculadora_de_eficiencia
             panel_archivo.SendToBack();
             panel_inicio.Visible = true;
             panel_inicio.BringToFront();
+        }
+
+        private void boton_evaluar_Click(object sender, EventArgs e)
+        {
+            // Verifica que haya un archivo cargado
+            if (string.IsNullOrEmpty(rutaArchivoCargado))
+            {
+                MessageBox.Show("Primero debes cargar un archivo.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                // Obtener resultados usando la clase Operaciones
+                var resultados = Calculadora_de_eficiencia.Services.Operaciones.ContarOperaciones(rutaArchivoCargado);
+
+                // Limpiar el RichTextBox
+                richTextBox1.Clear();
+
+                // Mostrar los resultados
+                richTextBox1.AppendText("Resultados de operaciones encontradas:\n\n");
+
+                foreach (var item in resultados)
+                {
+                    richTextBox1.AppendText($"{item.Key}: {item.Value}\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ocurrió un error al evaluar el archivo:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void boton_archivo_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(richTextBox1.Text))
+            {
+                MessageBox.Show("No hay resultados para guardar. asegurate de haber evaluado un archivo.",
+                    "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Title = "Guardar resultados",
+                Filter = "Archivo de texto (*.txt)|*.txt",
+                FileName = "Resultados_" + Path.GetFileNameWithoutExtension(rutaArchivoCargado) + ".txt",
+                DefaultExt = "txt",
+                AddExtension = true, //Asegura que la extención sea .txt si el usuario no la incluye
+            };
+
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                string rutaFinal = saveFileDialog.FileName;
+
+                //Asegura que el archivo termine en .txt
+                if (!rutaFinal.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+                {
+                    rutaFinal += ".txt";
+                }
+
+                try
+                {
+                    File.WriteAllText(rutaFinal, richTextBox1.Text);
+                    MessageBox.Show("Resultados guardados correctamente en:\n" + rutaFinal,
+                        "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error al guardar el archivo:\n" + ex.Message, "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
     }
 }

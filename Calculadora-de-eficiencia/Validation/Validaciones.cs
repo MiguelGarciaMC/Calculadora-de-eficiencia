@@ -1,6 +1,6 @@
-﻿using System;
+﻿using System;                                                          
 using System.IO;
-
+  
 namespace Calculadora_de_eficiencia.Validation
 {
     internal static class Validaciones
@@ -85,7 +85,6 @@ namespace Calculadora_de_eficiencia.Validation
                 errorMessage = $"Error al leer el archivo: {ex.Message}";
                 return false;
             }
-
         }
     }
 }
