@@ -25,7 +25,6 @@ public class Asignacion
     public void Recorrer(SyntaxNode nodo)
     {
 
-
         ConsolaVirtual.Escribir("\n--- Análisis separado por clases y métodos públicos ---");
 
         var clases = nodo.DescendantNodes().OfType<ClassDeclarationSyntax>().ToList();
