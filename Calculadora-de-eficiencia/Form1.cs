@@ -117,6 +117,7 @@ namespace Calculadora_de_eficiencia
             }
         }
 
+        //Descargar el Archivo
         private void boton_archivo_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(richTextBox1.Text))
