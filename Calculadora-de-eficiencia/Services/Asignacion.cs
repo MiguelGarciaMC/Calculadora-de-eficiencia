@@ -157,22 +157,22 @@ public class Asignacion
                 string cuerpo = ObtenerExpresionManual(forStmt.Statement);
                 resultado.Add($"n[{cuerpo}]");
                 break;
-            
+
             case WhileStatementSyntax whileStmt:
-                    ConsolaVirtual.Escribir($"[{whileStmt.Condition}] Detectado: while - comparación ␦ valor: {valoresOperacion["while_comparacion"]}");
-                    resultado.Add(valoresOperacion["while_comparacion"]);
+                ConsolaVirtual.Escribir($"[{whileStmt.Condition}] Detectado: while - comparación ␦ valor: {valoresOperacion["while_comparacion"]}");
+                resultado.Add(valoresOperacion["while_comparacion"]);
 
-                    string cuerpoWhile = ObtenerExpresionManual(whileStmt.Statement);
-                    if (!string.IsNullOrWhiteSpace(cuerpoWhile)) resultado.Add($"n[{cuerpoWhile}]");
-                    break;
+                string cuerpoWhile = ObtenerExpresionManual(whileStmt.Statement);
+                if (!string.IsNullOrWhiteSpace(cuerpoWhile)) resultado.Add($"n[{cuerpoWhile}]");
+                break;
 
-                case DoStatementSyntax doStmt:
-                    ConsolaVirtual.Escribir($"[{doStmt.Condition}] Detectado: do-while - comparación ␦ valor: {valoresOperacion["dowhile_comparacion"]}");
-                    resultado.Add(valoresOperacion["dowhile_comparacion"]);
+            case DoStatementSyntax doStmt:
+                ConsolaVirtual.Escribir($"[{doStmt.Condition}] Detectado: do-while - comparación ␦ valor: {valoresOperacion["dowhile_comparacion"]}");
+                resultado.Add(valoresOperacion["dowhile_comparacion"]);
 
-                    string cuerpoDoWhile = ObtenerExpresionManual(doStmt.Statement);
-                    if (!string.IsNullOrWhiteSpace(cuerpoDoWhile)) resultado.Add($"n[{cuerpoDoWhile}]");
-                    break;
+                string cuerpoDoWhile = ObtenerExpresionManual(doStmt.Statement);
+                if (!string.IsNullOrWhiteSpace(cuerpoDoWhile)) resultado.Add($"n[{cuerpoDoWhile}]");
+                break;
 
             case ExpressionStatementSyntax exprStmt:
                 if (exprStmt.Expression is InvocationExpressionSyntax llamada &&
@@ -185,29 +185,29 @@ public class Asignacion
                     {
                         ProcesarExpresion(arg.Expression, resultado);
                     }
-                  
-                  }
+
+                }
                 else if (exprStmt.Expression is AssignmentExpressionSyntax exprAssign)
                 {
                     ConsolaVirtual.Escribir($"[{exprAssign}] Detectado: asignación (expresión) ␦ valor: {valoresOperacion["asignacion"]}");
                     resultado.Add(valoresOperacion["asignacion"]);
                     ProcesarExpresion(exprAssign.Right, resultado);
                 }
-                    else if (exprStmt.Expression is PostfixUnaryExpressionSyntax postUnary &&
-                             (postUnary.IsKind(SyntaxKind.PostIncrementExpression) ||
-                              postUnary.IsKind(SyntaxKind.PostDecrementExpression)))
-                    {
-                        ConsolaVirtual.Escribir($"[{postUnary}] Detectado: incremento/decremento ␦ valor: 1");
-                        resultado.Add("1");
-                    }
-                    else if (exprStmt.Expression is PrefixUnaryExpressionSyntax preUnary &&
-                             (preUnary.IsKind(SyntaxKind.PreIncrementExpression) ||
-                              preUnary.IsKind(SyntaxKind.PreDecrementExpression)))
-                    {
-                        ConsolaVirtual.Escribir($"[{preUnary}] Detectado: incremento/decremento ␦ valor: 1");
-                        resultado.Add("1");
-                    }
-                    break;
+                else if (exprStmt.Expression is PostfixUnaryExpressionSyntax postUnary &&
+                         (postUnary.IsKind(SyntaxKind.PostIncrementExpression) ||
+                          postUnary.IsKind(SyntaxKind.PostDecrementExpression)))
+                {
+                    ConsolaVirtual.Escribir($"[{postUnary}] Detectado: incremento/decremento ␦ valor: 1");
+                    resultado.Add("1");
+                }
+                else if (exprStmt.Expression is PrefixUnaryExpressionSyntax preUnary &&
+                         (preUnary.IsKind(SyntaxKind.PreIncrementExpression) ||
+                          preUnary.IsKind(SyntaxKind.PreDecrementExpression)))
+                {
+                    ConsolaVirtual.Escribir($"[{preUnary}] Detectado: incremento/decremento ␦ valor: 1");
+                    resultado.Add("1");
+                }
+                break;
             default:
                 string sub = ObtenerExpresionManual(hijo);
                 if (!string.IsNullOrWhiteSpace(sub))
