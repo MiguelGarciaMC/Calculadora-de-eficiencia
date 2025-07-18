@@ -56,7 +56,7 @@ public class Asignacion
                 int totalOperacionesClase = resultadoClase.Split('+').Select(x => x.Trim()).Count(x => !string.IsNullOrEmpty(x));
                 ConsolaVirtual.Escribir($"Total de operaciones detectadas en la clase: {totalOperacionesClase}");
 
-                string simplificadaClase = ResolverFormulaYObtener(resultadoClase);
+                string simplificadaClase = ResolverFormula(resultadoClase);
                 expresionesSimplificadas.Add(simplificadaClase);
             }
 
@@ -81,7 +81,7 @@ public class Asignacion
                 int totalOperacionesMetodo = resultadoMetodo.Split('+').Select(x => x.Trim()).Count(x => !string.IsNullOrEmpty(x));
                 ConsolaVirtual.Escribir($"Total de operaciones detectadas en el método: {totalOperacionesMetodo}");
 
-                string simplificadaMetodo = ResolverFormulaYObtener(resultadoMetodo);
+                string simplificadaMetodo = ResolverFormula(resultadoMetodo);
                 expresionesSimplificadas.Add(simplificadaMetodo);
             }
         }
