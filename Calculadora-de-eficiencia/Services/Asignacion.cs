@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Calculadora_de_eficiencia.Utils;
 using MathNet.Symbolics;
 using Microsoft.CodeAnalysis;
@@ -24,11 +25,63 @@ public class Asignacion
 
     public void Recorrer(SyntaxNode nodo)
     {
-        string resultado = ObtenerExpresionManual(nodo);
-        ConsolaVirtual.Escribir("\n--- Expansión algebraica paso a paso ---");
-        ConsolaVirtual.Escribir("T(n) = " + resultado);
+        ConsolaVirtual.Escribir("\n--- Análisis separado por clases y métodos públicos ---");
 
-        ResolverFormula(resultado);
+        var clases = nodo.DescendantNodes().OfType<ClassDeclarationSyntax>().ToList();
+
+        if (clases.Count == 0)
+        {
+            ConsolaVirtual.Escribir("\n[INFO] No se encontraron clases.");
+            return;
+        }
+
+        foreach (var clase in clases)
+        {
+            ConsolaVirtual.Escribir($"\n===== CLASE DETECTADA: {clase.Identifier.Text} =====");
+
+            // Analizar SOLO campos y propiedades de la clase, ignorando sus métodos
+            string resultadoClase = ObtenerExpresionManual_SoloCuerpoClase(clase);
+
+            ConsolaVirtual.Escribir($"\n--- Operaciones internas de la clase {clase.Identifier.Text} ---");
+            ConsolaVirtual.Escribir("T(n) = " + resultadoClase);
+            ResolverFormula(resultadoClase);
+
+            var metodosPublicos = clase.Members
+                .OfType<MethodDeclarationSyntax>()
+                .Where(m => m.Modifiers.Any(mod => mod.IsKind(SyntaxKind.PublicKeyword)))
+                .ToList();
+
+            if (metodosPublicos.Count == 0)
+            {
+                ConsolaVirtual.Escribir($"[INFO] La clase {clase.Identifier.Text} no contiene métodos públicos.");
+            }
+
+            foreach (var metodo in metodosPublicos)
+            {
+                ConsolaVirtual.Escribir($"\n--- MÉTODO PÚBLICO DETECTADO: {metodo.Identifier.Text} en {clase.Identifier.Text} ---");
+
+                string resultadoMetodo = ObtenerExpresionManual(metodo);
+
+                ConsolaVirtual.Escribir($"T(n) = {resultadoMetodo}");
+                ResolverFormula(resultadoMetodo);
+            }
+        }
+    }
+
+    // Analiza solo el cuerpo real de la clase, ignorando métodos
+    private string ObtenerExpresionManual_SoloCuerpoClase(SyntaxNode nodo)
+    {
+        var resultado = new List<string>();
+
+        foreach (var hijo in nodo.ChildNodes())
+        {
+            if (hijo is MethodDeclarationSyntax)
+                continue; // IGNORAR MÉTODOS al analizar la clase
+
+            resultado.AddRange(ObtenerExpresionManualPorTipo(hijo));
+        }
+
+        return string.Join(" + ", resultado);
     }
 
     private string ObtenerExpresionManual(SyntaxNode nodo)
@@ -37,91 +90,100 @@ public class Asignacion
 
         foreach (var hijo in nodo.ChildNodes())
         {
-            switch (hijo)
-            {
-                case LocalDeclarationStatementSyntax decl:
-                    foreach (var variable in decl.Declaration.Variables)
-                    {
-                        if (variable.Initializer != null)
-                        {
-                            ConsolaVirtual.Escribir($"[{variable}] Detectado: asignación (local) ␦ valor: {valoresOperacion["asignacion"]}");
-                            resultado.Add(valoresOperacion["asignacion"]);
-                            ProcesarExpresion(variable.Initializer.Value, resultado);
-                        }
-                        else
-                        {
-                            ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración (local) ␦ valor: {valoresOperacion["declaracion"]}");
-                            resultado.Add(valoresOperacion["declaracion"]);
-                        }
-                    }
-                    break;
-
-                case FieldDeclarationSyntax campo:
-                    foreach (var variable in campo.Declaration.Variables)
-                    {
-                        if (variable.Initializer != null)
-                        {
-                            ConsolaVirtual.Escribir($"[{variable}] Detectado: asignación (campo) ␦ valor: {valoresOperacion["asignacion"]}");
-                            resultado.Add(valoresOperacion["asignacion"]);
-                            ProcesarExpresion(variable.Initializer.Value, resultado);
-                        }
-                        else
-                        {
-                            ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración (campo) ␦ valor: {valoresOperacion["declaracion"]}");
-                            resultado.Add(valoresOperacion["declaracion"]);
-                        }
-                    }
-                    break;
-
-                case AssignmentExpressionSyntax assign:
-                    ConsolaVirtual.Escribir($"[{assign}] Detectado: asignación ␦ valor: {valoresOperacion["asignacion"]}");
-                    resultado.Add(valoresOperacion["asignacion"]);
-                    ProcesarExpresion(assign.Right, resultado);
-                    break;
-
-                case ForStatementSyntax forStmt:
-                    ConsolaVirtual.Escribir($"[{forStmt.Initializers}] Detectado: for - inicialización ␦ valor: {valoresOperacion["for_inicializacion"]}");
-                    resultado.Add(valoresOperacion["for_inicializacion"]);
-
-                    ConsolaVirtual.Escribir($"[{forStmt.Condition}] Detectado: for - comparación ␦ valor: {valoresOperacion["for_comparacion"]}");
-                    resultado.Add(valoresOperacion["for_comparacion"]);
-
-                    ConsolaVirtual.Escribir($"[{forStmt.Incrementors}] Detectado: for - incremento ␦ valor: {valoresOperacion["for_incremento"]}");
-                    resultado.Add(valoresOperacion["for_incremento"]);
-
-                    string cuerpo = ObtenerExpresionManual(forStmt.Statement);
-                    resultado.Add($"n[{cuerpo}]");
-                    break;
-
-                case ExpressionStatementSyntax exprStmt:
-                    if (exprStmt.Expression is InvocationExpressionSyntax llamada &&
-                        llamada.Expression.ToString().Contains("Console.WriteLine"))
-                    {
-                        ConsolaVirtual.Escribir($"[{exprStmt}] Detectado: Console.WriteLine ␦ valor: {valoresOperacion["console_write"]}");
-                        resultado.Add(valoresOperacion["console_write"]);
-
-                        foreach (var arg in llamada.ArgumentList.Arguments)
-                        {
-                            ProcesarExpresion(arg.Expression, resultado);
-                        }
-                    }
-                    else if (exprStmt.Expression is AssignmentExpressionSyntax exprAssign)
-                    {
-                        ConsolaVirtual.Escribir($"[{exprAssign}] Detectado: asignación (expresión) ␦ valor: {valoresOperacion["asignacion"]}");
-                        resultado.Add(valoresOperacion["asignacion"]);
-                        ProcesarExpresion(exprAssign.Right, resultado);
-                    }
-                    break;
-
-                default:
-                    string sub = ObtenerExpresionManual(hijo);
-                    if (!string.IsNullOrWhiteSpace(sub))
-                        resultado.Add(sub);
-                    break;
-            }
+            resultado.AddRange(ObtenerExpresionManualPorTipo(hijo));
         }
 
         return string.Join(" + ", resultado);
+    }
+
+    private List<string> ObtenerExpresionManualPorTipo(SyntaxNode hijo)
+    {
+        var resultado = new List<string>();
+
+        switch (hijo)
+        {
+            case LocalDeclarationStatementSyntax decl:
+                foreach (var variable in decl.Declaration.Variables)
+                {
+                    if (variable.Initializer != null)
+                    {
+                        ConsolaVirtual.Escribir($"[{variable}] Detectado: asignación (local) ␦ valor: {valoresOperacion["asignacion"]}");
+                        resultado.Add(valoresOperacion["asignacion"]);
+                        ProcesarExpresion(variable.Initializer.Value, resultado);
+                    }
+                    else
+                    {
+                        ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración (local) ␦ valor: {valoresOperacion["declaracion"]}");
+                        resultado.Add(valoresOperacion["declaracion"]);
+                    }
+                }
+                break;
+
+            case FieldDeclarationSyntax campo:
+                foreach (var variable in campo.Declaration.Variables)
+                {
+                    if (variable.Initializer != null)
+                    {
+                        ConsolaVirtual.Escribir($"[{variable}] Detectado: asignación (campo) ␦ valor: {valoresOperacion["asignacion"]}");
+                        resultado.Add(valoresOperacion["asignacion"]);
+                        ProcesarExpresion(variable.Initializer.Value, resultado);
+                    }
+                    else
+                    {
+                        ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración (campo) ␦ valor: {valoresOperacion["declaracion"]}");
+                        resultado.Add(valoresOperacion["declaracion"]);
+                    }
+                }
+                break;
+
+            case AssignmentExpressionSyntax assign:
+                ConsolaVirtual.Escribir($"[{assign}] Detectado: asignación ␦ valor: {valoresOperacion["asignacion"]}");
+                resultado.Add(valoresOperacion["asignacion"]);
+                ProcesarExpresion(assign.Right, resultado);
+                break;
+
+            case ForStatementSyntax forStmt:
+                ConsolaVirtual.Escribir($"[{forStmt.Initializers}] Detectado: for - inicialización ␦ valor: {valoresOperacion["for_inicializacion"]}");
+                resultado.Add(valoresOperacion["for_inicializacion"]);
+
+                ConsolaVirtual.Escribir($"[{forStmt.Condition}] Detectado: for - comparación ␦ valor: {valoresOperacion["for_comparacion"]}");
+                resultado.Add(valoresOperacion["for_comparacion"]);
+
+                ConsolaVirtual.Escribir($"[{forStmt.Incrementors}] Detectado: for - incremento ␦ valor: {valoresOperacion["for_incremento"]}");
+                resultado.Add(valoresOperacion["for_incremento"]);
+
+                string cuerpo = ObtenerExpresionManual(forStmt.Statement);
+                resultado.Add($"n[{cuerpo}]");
+                break;
+
+            case ExpressionStatementSyntax exprStmt:
+                if (exprStmt.Expression is InvocationExpressionSyntax llamada &&
+                    llamada.Expression.ToString().Contains("Console.WriteLine"))
+                {
+                    ConsolaVirtual.Escribir($"[{exprStmt}] Detectado: Console.WriteLine ␦ valor: {valoresOperacion["console_write"]}");
+                    resultado.Add(valoresOperacion["console_write"]);
+
+                    foreach (var arg in llamada.ArgumentList.Arguments)
+                    {
+                        ProcesarExpresion(arg.Expression, resultado);
+                    }
+                }
+                else if (exprStmt.Expression is AssignmentExpressionSyntax exprAssign)
+                {
+                    ConsolaVirtual.Escribir($"[{exprAssign}] Detectado: asignación (expresión) ␦ valor: {valoresOperacion["asignacion"]}");
+                    resultado.Add(valoresOperacion["asignacion"]);
+                    ProcesarExpresion(exprAssign.Right, resultado);
+                }
+                break;
+
+            default:
+                string sub = ObtenerExpresionManual(hijo);
+                if (!string.IsNullOrWhiteSpace(sub))
+                    resultado.Add(sub);
+                break;
+        }
+
+        return resultado;
     }
 
     private void ProcesarExpresion(ExpressionSyntax expr, List<string> resultado)
@@ -187,8 +249,8 @@ public class Asignacion
         ConsolaVirtual.Escribir("\n--- Resolución simbólica (con MathNet.Symbolics) ---");
 
         string expr = expresion.Replace("]", ")")
-                                .Replace("[", "(")
-                                .Replace("n(", "n*(");
+                               .Replace("[", "(")
+                               .Replace("n(", "n*(");
 
         ConsolaVirtual.Escribir("Expandida: " + expr);
 
