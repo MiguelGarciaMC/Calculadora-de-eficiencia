@@ -19,7 +19,8 @@ public class Asignacion
         { "aritmetica", "1" },
         { "logica", "1" },
         { "console_write", "1" },
-        { "comparacion", "1" }
+        { "comparacion", "1" },
+        { "acceso_arreglo", "1" }
     };
 
     public void Recorrer(SyntaxNode nodo)
@@ -247,11 +248,33 @@ public class Asignacion
 
     private void ProcesarExpresion(ExpressionSyntax expr, List<string> resultado)
     {
-        if (expr is BinaryExpressionSyntax bin)
+        // ⚠️ Caso nuevo: paréntesis
+        if (expr is ParenthesizedExpressionSyntax parentesis)
         {
+            // Recurse into the inner expression
+            ProcesarExpresion(parentesis.Expression, resultado);
+        }
+        else if (expr is ElementAccessExpressionSyntax acceso)
+        {
+            ConsolaVirtual.Escribir($"[{acceso}] Detectado: acceso a arreglo ␦ valor: {valoresOperacion["acceso_arreglo"]}");
+            resultado.Add(valoresOperacion["acceso_arreglo"]);
+
+            // Analizar todos los índices dentro de los corchetes
+            foreach (var arg in acceso.ArgumentList.Arguments)
+            {
+                ProcesarExpresion(arg.Expression, resultado);
+            }
+
+            // Recurre sobre la expresión base (por ejemplo: tensor en tensor[1][2])
+            ProcesarExpresion(acceso.Expression, resultado);
+        }
+        else if (expr is BinaryExpressionSyntax bin)
+        {
+            // Recorrer lado izquierdo y derecho primero
             ProcesarExpresion(bin.Left, resultado);
             ProcesarExpresion(bin.Right, resultado);
 
+            // Clasificar tipo de operación
             if (bin.IsKind(SyntaxKind.AddExpression) ||
                 bin.IsKind(SyntaxKind.SubtractExpression) ||
                 bin.IsKind(SyntaxKind.MultiplyExpression) ||
@@ -277,9 +300,10 @@ public class Asignacion
                 resultado.Add(valoresOperacion["logica"]);
             }
         }
+        // Si quieres extender más tipos de expresiones, puedes seguir con otros `else if`
     }
 
-    private string ResolverFormulaYObtener(string expresion)
+    public void ResolverFormula(string expresion)
     {
         ConsolaVirtual.Escribir("\n--- Resolución simbólica (con MathNet.Symbolics) ---");
 
