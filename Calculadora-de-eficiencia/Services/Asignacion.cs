@@ -303,7 +303,7 @@ public class Asignacion
         // Si quieres extender más tipos de expresiones, puedes seguir con otros `else if`
     }
 
-    public void ResolverFormula(string expresion)
+    public string ResolverFormula(string expresion)
     {
         ConsolaVirtual.Escribir("\n--- Resolución simbólica (con MathNet.Symbolics) ---");
 
