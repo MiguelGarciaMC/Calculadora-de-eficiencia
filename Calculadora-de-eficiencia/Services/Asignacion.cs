@@ -109,7 +109,8 @@ public class Asignacion
                 {
                     if (variable.Initializer != null)
                     {
-                        ConsolaVirtual.Escribir($"[{variable}] Detectado: asignación (local) ␦ valor: {valoresOperacion["asignacion"]}");
+                        ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración + asignación (local) ␦ valor: {valoresOperacion["declaracion"]} + {valoresOperacion["asignacion"]}");
+                        resultado.Add(valoresOperacion["declaracion"]);
                         resultado.Add(valoresOperacion["asignacion"]);
                         ProcesarExpresion(variable.Initializer.Value, resultado);
                     }
@@ -126,7 +127,8 @@ public class Asignacion
                 {
                     if (variable.Initializer != null)
                     {
-                        ConsolaVirtual.Escribir($"[{variable}] Detectado: asignación (campo) ␦ valor: {valoresOperacion["asignacion"]}");
+                        ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración + asignación (campo) ␦ valor: {valoresOperacion["declaracion"]} + {valoresOperacion["asignacion"]}");
+                        resultado.Add(valoresOperacion["declaracion"]);
                         resultado.Add(valoresOperacion["asignacion"]);
                         ProcesarExpresion(variable.Initializer.Value, resultado);
                     }
