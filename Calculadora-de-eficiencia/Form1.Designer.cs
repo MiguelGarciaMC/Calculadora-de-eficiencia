@@ -115,9 +115,9 @@
             // 
             // richTextBox1
             // 
-            richTextBox1.Location = new Point(32, 147);
+            richTextBox1.Location = new Point(32, 118);
             richTextBox1.Name = "richTextBox1";
-            richTextBox1.Size = new Size(236, 233);
+            richTextBox1.Size = new Size(245, 262);
             richTextBox1.TabIndex = 6;
             richTextBox1.Text = "";
             // 
@@ -143,15 +143,16 @@
             // laber_resultado
             // 
             laber_resultado.AutoSize = true;
-            laber_resultado.Location = new Point(86, 112);
+            laber_resultado.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            laber_resultado.Location = new Point(118, 94);
             laber_resultado.Name = "laber_resultado";
-            laber_resultado.Size = new Size(64, 15);
+            laber_resultado.Size = new Size(75, 17);
             laber_resultado.TabIndex = 3;
             laber_resultado.Text = "Resultados";
             // 
             // boton_archivo
             // 
-            boton_archivo.Location = new Point(624, 193);
+            boton_archivo.Location = new Point(626, 218);
             boton_archivo.Name = "boton_archivo";
             boton_archivo.Size = new Size(133, 23);
             boton_archivo.TabIndex = 2;
@@ -173,7 +174,7 @@
             // 
             // boton_regresar
             // 
-            boton_regresar.Location = new Point(336, 357);
+            boton_regresar.Location = new Point(380, 357);
             boton_regresar.Name = "boton_regresar";
             boton_regresar.Size = new Size(75, 23);
             boton_regresar.TabIndex = 0;

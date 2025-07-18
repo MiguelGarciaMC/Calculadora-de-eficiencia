@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Calculadora_de_eficiencia.Utils;
@@ -20,6 +20,8 @@ public class Asignacion
         { "logica", "1" },
         { "console_write", "1" },
         { "comparacion", "1" },
+        { "while_comparacion", "n + 1" },
+        { "dowhile_comparacion", "n + 1" },
         { "acceso_arreglo", "1" }
     };
 
@@ -167,7 +169,8 @@ public class Asignacion
                 {
                     if (variable.Initializer != null)
                     {
-                        ConsolaVirtual.Escribir($"[{variable}] Detectado: asignación (local) ␦ valor: {valoresOperacion["asignacion"]}");
+                        ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración + asignación (local) ␦ valor: {valoresOperacion["declaracion"]} + {valoresOperacion["asignacion"]}");
+                        resultado.Add(valoresOperacion["declaracion"]);
                         resultado.Add(valoresOperacion["asignacion"]);
                         ProcesarExpresion(variable.Initializer.Value, resultado);
                     }
@@ -184,7 +187,8 @@ public class Asignacion
                 {
                     if (variable.Initializer != null)
                     {
-                        ConsolaVirtual.Escribir($"[{variable}] Detectado: asignación (campo) ␦ valor: {valoresOperacion["asignacion"]}");
+                        ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración + asignación (campo) ␦ valor: {valoresOperacion["declaracion"]} + {valoresOperacion["asignacion"]}");
+                        resultado.Add(valoresOperacion["declaracion"]);
                         resultado.Add(valoresOperacion["asignacion"]);
                         ProcesarExpresion(variable.Initializer.Value, resultado);
                     }
@@ -216,6 +220,22 @@ public class Asignacion
                 resultado.Add($"n[{cuerpo}]");
                 break;
 
+            case WhileStatementSyntax whileStmt:
+                ConsolaVirtual.Escribir($"[{whileStmt.Condition}] Detectado: while - comparación ␦ valor: {valoresOperacion["while_comparacion"]}");
+                resultado.Add(valoresOperacion["while_comparacion"]);
+
+                string cuerpoWhile = ObtenerExpresionManual(whileStmt.Statement);
+                if (!string.IsNullOrWhiteSpace(cuerpoWhile)) resultado.Add($"n[{cuerpoWhile}]");
+                break;
+
+            case DoStatementSyntax doStmt:
+                ConsolaVirtual.Escribir($"[{doStmt.Condition}] Detectado: do-while - comparación ␦ valor: {valoresOperacion["dowhile_comparacion"]}");
+                resultado.Add(valoresOperacion["dowhile_comparacion"]);
+
+                string cuerpoDoWhile = ObtenerExpresionManual(doStmt.Statement);
+                if (!string.IsNullOrWhiteSpace(cuerpoDoWhile)) resultado.Add($"n[{cuerpoDoWhile}]");
+                break;
+
             case ExpressionStatementSyntax exprStmt:
                 if (exprStmt.Expression is InvocationExpressionSyntax llamada &&
                     llamada.Expression.ToString().Contains("Console.WriteLine"))
@@ -227,6 +247,7 @@ public class Asignacion
                     {
                         ProcesarExpresion(arg.Expression, resultado);
                     }
+
                 }
                 else if (exprStmt.Expression is AssignmentExpressionSyntax exprAssign)
                 {
@@ -234,7 +255,60 @@ public class Asignacion
                     resultado.Add(valoresOperacion["asignacion"]);
                     ProcesarExpresion(exprAssign.Right, resultado);
                 }
+                else if (exprStmt.Expression is PostfixUnaryExpressionSyntax postUnary &&
+                         (postUnary.IsKind(SyntaxKind.PostIncrementExpression) ||
+                          postUnary.IsKind(SyntaxKind.PostDecrementExpression)))
+                {
+                    ConsolaVirtual.Escribir($"[{postUnary}] Detectado: incremento/decremento ␦ valor: 1");
+                    resultado.Add("1");
+                }
+                else if (exprStmt.Expression is PrefixUnaryExpressionSyntax preUnary &&
+                         (preUnary.IsKind(SyntaxKind.PreIncrementExpression) ||
+                          preUnary.IsKind(SyntaxKind.PreDecrementExpression)))
+                {
+                    ConsolaVirtual.Escribir($"[{preUnary}] Detectado: incremento/decremento ␦ valor: 1");
+                    resultado.Add("1");
+                }
                 break;
+            case IfStatementSyntax ifStmt:
+                ConsolaVirtual.Escribir("→ Inicia if");
+                ProcesarExpresion(ifStmt.Condition, resultado);  // Procesa condición del if
+
+                string cuerpoIf = ObtenerExpresionManual(ifStmt.Statement);
+                if (!string.IsNullOrWhiteSpace(cuerpoIf))
+                    resultado.Add($"({cuerpoIf})");
+                ConsolaVirtual.Escribir("→ Finaliza if");
+
+                var elseNodo = ifStmt.Else;
+
+                while (elseNodo != null)
+                {
+                    if (elseNodo.Statement is IfStatementSyntax elseIfStmt)
+                    {
+                        ConsolaVirtual.Escribir("→ Inicia else if");
+                        ProcesarExpresion(elseIfStmt.Condition, resultado);  // Procesa condición del else if
+
+                        string cuerpoElseIf = ObtenerExpresionManual(elseIfStmt.Statement);
+                        if (!string.IsNullOrWhiteSpace(cuerpoElseIf))
+                            resultado.Add($"({cuerpoElseIf})");
+                        ConsolaVirtual.Escribir("→ Finaliza else if");
+
+                        elseNodo = elseIfStmt.Else;
+                    }
+                    else
+                    {
+                        ConsolaVirtual.Escribir("→ Inicia else");
+
+                        string cuerpoElse = ObtenerExpresionManual(elseNodo.Statement);
+                        if (!string.IsNullOrWhiteSpace(cuerpoElse))
+                            resultado.Add($"({cuerpoElse})");
+                        ConsolaVirtual.Escribir("→ Finaliza else");
+
+                        break;
+                    }
+                }
+                break;
+
 
             default:
                 string sub = ObtenerExpresionManual(hijo);
