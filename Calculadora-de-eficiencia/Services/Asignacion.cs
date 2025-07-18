@@ -18,7 +18,11 @@ public class Asignacion
         { "aritmetica", "1" },
         { "logica", "1" },
         { "console_write", "1" },
-        { "comparacion", "1" }
+        { "comparacion", "1" },
+        // Nuevos costos para if/else
+        { "if_condicion", "1" }, // Costo de evaluar la condición del if
+        { "else_if_condicion", "1" }, // Costo de evaluar la condición del else if
+        { "else_bloque", "1" } // Costo base por el bloque else (podría ser 0 si solo cuenta el contenido)
     };
 
     public void Recorrer(SyntaxNode nodo)
@@ -34,89 +38,195 @@ public class Asignacion
     {
         var resultado = new List<string>();
 
-        foreach (var hijo in nodo.ChildNodes())
+        // Manejar BlockSyntax (cuerpos de métodos, bucles, if/else)
+        if (nodo is BlockSyntax block)
         {
-            switch (hijo)
+            foreach (var sentencia in block.Statements)
             {
-                case LocalDeclarationStatementSyntax decl:
-                    foreach (var variable in decl.Declaration.Variables)
-                    {
-                        if (variable.Initializer != null)
-                        {
-                            ConsolaVirtual.Escribir($"[{variable}] Detectado: asignación (local) ␦ valor: {valoresOperacion["asignacion"]}");
-                            resultado.Add(valoresOperacion["asignacion"]);
-                            ProcesarExpresion(variable.Initializer.Value, resultado);
-                        }
-                        else
-                        {
-                            ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración (local) ␦ valor: {valoresOperacion["declaracion"]}");
-                            resultado.Add(valoresOperacion["declaracion"]);
-                        }
-                    }
-                    break;
+                string costoSentencia = ObtenerExpresionManual(sentencia);
+                if (!string.IsNullOrWhiteSpace(costoSentencia))
+                {
+                    resultado.Add(costoSentencia);
+                }
+            }
+        }
+        // Manejar LocalDeclarationStatementSyntax (e.g., int x = 1;)
+        else if (nodo is LocalDeclarationStatementSyntax decl)
+        {
+            foreach (var variable in decl.Declaration.Variables)
+            {
+                ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración (local) ␦ valor: {valoresOperacion["declaracion"]}");
+                resultado.Add(valoresOperacion["declaracion"]);
 
-                case FieldDeclarationSyntax campo:
-                    foreach (var variable in campo.Declaration.Variables)
-                    {
-                        if (variable.Initializer != null)
-                        {
-                            ConsolaVirtual.Escribir($"[{variable}] Detectado: asignación (campo) ␦ valor: {valoresOperacion["asignacion"]}");
-                            resultado.Add(valoresOperacion["asignacion"]);
-                            ProcesarExpresion(variable.Initializer.Value, resultado);
-                        }
-                        else
-                        {
-                            ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración (campo) ␦ valor: {valoresOperacion["declaracion"]}");
-                            resultado.Add(valoresOperacion["declaracion"]);
-                        }
-                    }
-                    break;
-
-                case AssignmentExpressionSyntax assign:
-                    ConsolaVirtual.Escribir($"[{assign}] Detectado: asignación ␦ valor: {valoresOperacion["asignacion"]}");
+                if (variable.Initializer != null)
+                {
+                    ConsolaVirtual.Escribir($"[{variable}] Detectado: asignación (local) ␦ valor: {valoresOperacion["asignacion"]}");
                     resultado.Add(valoresOperacion["asignacion"]);
-                    ProcesarExpresion(assign.Right, resultado);
-                    break;
+                    ProcesarExpresion(variable.Initializer.Value, resultado);
+                }
+            }
+        }
+        // Manejar FieldDeclarationSyntax (e.g., private int myField = 0;)
+        else if (nodo is FieldDeclarationSyntax campo)
+        {
+            foreach (var variable in campo.Declaration.Variables)
+            {
+                ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración (campo) ␦ valor: {valoresOperacion["declaracion"]}");
+                resultado.Add(valoresOperacion["declaracion"]);
 
-                case ForStatementSyntax forStmt:
-                    ConsolaVirtual.Escribir($"[{forStmt.Initializers}] Detectado: for - inicialización ␦ valor: {valoresOperacion["for_inicializacion"]}");
-                    resultado.Add(valoresOperacion["for_inicializacion"]);
+                if (variable.Initializer != null)
+                {
+                    ConsolaVirtual.Escribir($"[{variable}] Detectado: asignación (campo) ␦ valor: {valoresOperacion["asignacion"]}");
+                    resultado.Add(valoresOperacion["asignacion"]);
+                    ProcesarExpresion(variable.Initializer.Value, resultado);
+                }
+            }
+        }
+        // Manejar AssignmentExpressionSyntax (e.g., x = 5;)
+        else if (nodo is AssignmentExpressionSyntax assign)
+        {
+            ConsolaVirtual.Escribir($"[{assign}] Detectado: asignación ␦ valor: {valoresOperacion["asignacion"]}");
+            resultado.Add(valoresOperacion["asignacion"]);
+            ProcesarExpresion(assign.Right, resultado);
+        }
+        // Manejar ForStatementSyntax
+        else if (nodo is ForStatementSyntax forStmt)
+        {
+            ConsolaVirtual.Escribir($"[{forStmt.Initializers}] Detectado: for - inicialización ␦ valor: {valoresOperacion["for_inicializacion"]}");
+            resultado.Add(valoresOperacion["for_inicializacion"]); // Esto es 1 (por ej. 'int i = 0')
 
-                    ConsolaVirtual.Escribir($"[{forStmt.Condition}] Detectado: for - comparación ␦ valor: {valoresOperacion["for_comparacion"]}");
-                    resultado.Add(valoresOperacion["for_comparacion"]);
+            // Costo de la comparación del 'for'. Esto ya es 'n + 1'
+            // y abarca tanto la operación de comparación como la naturaleza de bucle.
+            ConsolaVirtual.Escribir($"[{forStmt.Condition}] Detectado: for - comparación ␦ valor: {valoresOperacion["for_comparacion"]}");
+            resultado.Add(valoresOperacion["for_comparacion"]); // Este es 'n + 1'
 
-                    ConsolaVirtual.Escribir($"[{forStmt.Incrementors}] Detectado: for - incremento ␦ valor: {valoresOperacion["for_incremento"]}");
-                    resultado.Add(valoresOperacion["for_incremento"]);
+            // **Asegúrate de que NO haya una llamada adicional a ProcesarExpresion para forStmt.Condition aquí.**
+            // Por ejemplo, NO debería haber una línea como: ProcesarExpresion(forStmt.Condition, resultado);
+            // Si tienes esa línea, ELIMÍNALA. <--- ¡Esto es clave y ya lo tienes bien!
 
-                    string cuerpo = ObtenerExpresionManual(forStmt.Statement);
-                    resultado.Add($"n[{cuerpo}]");
-                    break;
+            ConsolaVirtual.Escribir($"[{forStmt.Incrementors}] Detectado: for - incremento ␦ valor: {valoresOperacion["for_incremento"]}");
+            resultado.Add(valoresOperacion["for_incremento"]); // Este es 'n'
 
-                case ExpressionStatementSyntax exprStmt:
-                    if (exprStmt.Expression is InvocationExpressionSyntax llamada &&
-                        llamada.Expression.ToString().Contains("Console.WriteLine"))
+            string cuerpoFor = ObtenerExpresionManual(forStmt.Statement);
+            if (!string.IsNullOrWhiteSpace(cuerpoFor))
+            {
+                resultado.Add($"n[{cuerpoFor}]");
+            }
+        }
+        // Manejar IfStatementSyntax (aquí está la CLAVE)
+        else if (nodo is IfStatementSyntax ifStmt)
+        {
+            // 1. Costo de la condición del IF
+            ConsolaVirtual.Escribir($"[{ifStmt.Condition}] Detectado: if - condición ␦ valor: {valoresOperacion["if_condicion"]}");
+            resultado.Add(valoresOperacion["if_condicion"]);
+            ProcesarExpresion(ifStmt.Condition, resultado);
+
+            // 2. Costo del bloque IF
+            string cuerpoIf = ObtenerExpresionManual(ifStmt.Statement);
+            if (!string.IsNullOrWhiteSpace(cuerpoIf))
+            {
+                resultado.Add($"({cuerpoIf})");
+            }
+
+            // 3. Manejar la cláusula ELSE (si existe)
+            if (ifStmt.Else != null)
+            {
+                // EL CAMBIO PRINCIPAL AQUÍ:
+                // La cláusula ElseClauseSyntax (ifStmt.Else) tiene un 'Statement'.
+                // Si es un 'else if', su Statement será otro IfStatementSyntax.
+                // Si es un 'else' final, su Statement será un BlockSyntax.
+                // Vamos a procesar este 'Statement' recursivamente.
+                // PERO, necesitamos añadir el costo del 'else if' o 'else' en este nivel
+                // ANTES de que el recursor siga.
+
+                // Si el Statement del Else es otro IfStatement (es decir, un "else if")
+                if (ifStmt.Else.Statement is IfStatementSyntax subIfStmt)
+                {
+                    // Agrega el costo de la condición del ELSE IF específicamente
+                    ConsolaVirtual.Escribir($"[{subIfStmt.Condition}] Detectado: else if - condición ␦ valor: {valoresOperacion["else_if_condicion"]}");
+                    resultado.Add(valoresOperacion["else_if_condicion"]);
+                    ProcesarExpresion(subIfStmt.Condition, resultado);
+
+                    // Y luego procesa el cuerpo de ese ELSE IF
+                    string cuerpoElseIf = ObtenerExpresionManual(subIfStmt.Statement);
+                    if (!string.IsNullOrWhiteSpace(cuerpoElseIf))
                     {
-                        ConsolaVirtual.Escribir($"[{exprStmt}] Detectado: Console.WriteLine ␦ valor: {valoresOperacion["console_write"]}");
-                        resultado.Add(valoresOperacion["console_write"]);
+                        resultado.Add($"({cuerpoElseIf})");
+                    }
 
-                        foreach (var arg in llamada.ArgumentList.Arguments)
+                    // IMPORTANTE: Si este 'else if' tiene su propio 'else' (es decir, un 'else' anidado después del 'else if'),
+                    // necesitamos que ese también sea procesado. La recursión en ObtenerExpresionManual
+                    // en el cuerpo del método principal ya no bastaría si estamos en un 'else if'.
+                    // Por eso, la forma más limpia es hacer que el 'else if' también maneje su 'else'
+                    // si existe, usando la misma lógica.
+                    if (subIfStmt.Else != null)
+                    {
+                        string costoSubElse = ObtenerExpresionManual(subIfStmt.Else.Statement);
+                        if (!string.IsNullOrWhiteSpace(costoSubElse))
                         {
-                            ProcesarExpresion(arg.Expression, resultado);
+                            // Aseguramos que el costo del bloque ELSE final (si viene después de un else if) se sume
+                            if (subIfStmt.Else.Statement is BlockSyntax)
+                            {
+                                ConsolaVirtual.Escribir($"[{subIfStmt.Else.Statement}] Detectado: else - bloque ␦ valor: {valoresOperacion["else_bloque"]}");
+                                resultado.Add(valoresOperacion["else_bloque"]);
+                            }
+                            resultado.Add($"({costoSubElse})");
                         }
                     }
-                    else if (exprStmt.Expression is AssignmentExpressionSyntax exprAssign)
-                    {
-                        ConsolaVirtual.Escribir($"[{exprAssign}] Detectado: asignación (expresión) ␦ valor: {valoresOperacion["asignacion"]}");
-                        resultado.Add(valoresOperacion["asignacion"]);
-                        ProcesarExpresion(exprAssign.Right, resultado);
-                    }
-                    break;
+                }
+                // Si el Statement del Else es un BlockSyntax (es decir, un "else" final)
+                else if (ifStmt.Else.Statement is BlockSyntax elseBlock)
+                {
+                    // Agrega el costo base del bloque ELSE
+                    ConsolaVirtual.Escribir($"[{elseBlock}] Detectado: else - bloque ␦ valor: {valoresOperacion["else_bloque"]}");
+                    resultado.Add(valoresOperacion["else_bloque"]);
 
-                default:
-                    string sub = ObtenerExpresionManual(hijo);
-                    if (!string.IsNullOrWhiteSpace(sub))
-                        resultado.Add(sub);
-                    break;
+                    // Y luego procesa el cuerpo del ELSE
+                    string cuerpoElse = ObtenerExpresionManual(elseBlock);
+                    if (!string.IsNullOrWhiteSpace(cuerpoElse))
+                    {
+                        resultado.Add($"({cuerpoElse})");
+                    }
+                }
+            }
+        }
+        // Manejar ExpressionStatementSyntax (e.g., Console.WriteLine("Hello"); x = y + 1;)
+        else if (nodo is ExpressionStatementSyntax exprStmt)
+        {
+            if (exprStmt.Expression is InvocationExpressionSyntax llamada &&
+            llamada.Expression.ToString().Contains("Console.WriteLine"))
+            {
+                ConsolaVirtual.Escribir($"[{exprStmt}] Detectado: Console.WriteLine ␦ valor: {valoresOperacion["console_write"]}");
+                resultado.Add(valoresOperacion["console_write"]);
+
+                // !!! PROBABLE CAUSA DEL PROBLEMA AQUÍ !!!
+                foreach (var arg in llamada.ArgumentList.Arguments)
+                {
+                    ProcesarExpresion(arg.Expression, resultado); // Esto debería estar funcionando
+                }
+            }
+            else if (exprStmt.Expression is AssignmentExpressionSyntax exprAssign)
+            {
+                string costOfAssignment = ObtenerExpresionManual(exprAssign);
+                if (!string.IsNullOrWhiteSpace(costOfAssignment))
+                {
+                    resultado.Add(costOfAssignment);
+                }
+            }
+            else
+            {
+                ProcesarExpresion(exprStmt.Expression, resultado);
+            }
+        }
+        // "Catch-all" para otros nodos contenedores o de estructura no específicos.
+        // Asegura que se sigan explorando los sub-nodos para encontrar operaciones.
+        else if (nodo.ChildNodes().Any())
+        {
+            foreach (var hijo in nodo.ChildNodes())
+            {
+                string sub = ObtenerExpresionManual(hijo);
+                if (!string.IsNullOrWhiteSpace(sub))
+                    resultado.Add(sub);
             }
         }
 
@@ -127,14 +237,14 @@ public class Asignacion
     {
         if (expr is BinaryExpressionSyntax bin)
         {
-            // Recorrer lado izquierdo y derecho primero (recursivamente)
+            // 1. Procesar recursivamente los lados izquierdo y derecho primero
             ProcesarExpresion(bin.Left, resultado);
             ProcesarExpresion(bin.Right, resultado);
 
-            // Luego determinar tipo de operación
+            // 2. LUEGO, agregar el costo para la operación binaria actual
             if (bin.IsKind(SyntaxKind.AddExpression) ||
                 bin.IsKind(SyntaxKind.SubtractExpression) ||
-                bin.IsKind(SyntaxKind.MultiplyExpression) ||
+                bin.IsKind(SyntaxKind.MultiplyExpression) || // <-- ¡Esta es la clave para 'i * j'!
                 bin.IsKind(SyntaxKind.DivideExpression))
             {
                 ConsolaVirtual.Escribir($"[{bin}] Detectado: operación aritmética ␦ valor: {valoresOperacion["aritmetica"]}");
@@ -157,6 +267,18 @@ public class Asignacion
                 resultado.Add(valoresOperacion["logica"]);
             }
         }
+        // --- NUEVAS LÍNEAS AQUÍ ---
+        else if (expr is ParenthesizedExpressionSyntax parExpr)
+        {
+            // Si la expresión está entre paréntesis, procesa su contenido
+            ProcesarExpresion(parExpr.Expression, resultado);
+        }
+        else if (expr is IdentifierNameSyntax || expr is LiteralExpressionSyntax)
+        {
+            // No agregamos costo para identificadores o literales por sí mismos,
+            // ya que su "costo" se cuenta en las operaciones que los usan.
+        }
+        // --- FIN NUEVAS LÍNEAS ---
     }
 
     public void ResolverFormula(string expresion)
