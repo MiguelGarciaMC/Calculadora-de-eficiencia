@@ -22,7 +22,8 @@ public class Asignacion
         { "comparacion", "1" },
         { "while_comparacion", "n + 1" },
         { "dowhile_comparacion", "n + 1" },
-        { "acceso_arreglo", "1" }
+        { "acceso_arreglo", "1" },
+        { "foreach", "n" }///foreach
     };
 
     public void Recorrer(SyntaxNode nodo)
@@ -220,6 +221,59 @@ public class Asignacion
                 resultado.Add($"n[{cuerpo}]");
                 break;
 
+            ///foreach
+            case ForEachStatementSyntax foreachStmt:
+                ConsolaVirtual.Escribir($"[{foreachStmt.Identifier.Text} in {foreachStmt.Expression}] Detectado: foreach ␦ valor: n");
+                resultado.Add("n");  // Cabecera foreach
+
+                ConsolaVirtual.Escribir("→ Inicia foreach cuerpo");
+                string cuerpoForeach = ObtenerExpresionManual(foreachStmt.Statement);
+
+                if (!string.IsNullOrWhiteSpace(cuerpoForeach))
+                    resultado.Add($"n[{cuerpoForeach}]");  // El cuerpo del foreach se repite n veces
+
+                ConsolaVirtual.Escribir("→ Finaliza foreach cuerpo");
+                break;
+            ///Try
+            case TryStatementSyntax tryStmt:
+                ConsolaVirtual.Escribir("→ Inicia try");
+                resultado.Add("1");  // La entrada al try cuenta como una operación constante.
+
+                string cuerpoTry = ObtenerExpresionManual(tryStmt.Block);
+                if (!string.IsNullOrWhiteSpace(cuerpoTry))
+                    resultado.Add($"({cuerpoTry})");  // Analizar cuerpo del try
+
+                ConsolaVirtual.Escribir("→ Finaliza try");
+                ///Catches
+                foreach (var catchClause in tryStmt.Catches)
+                {
+                    ConsolaVirtual.Escribir("→ Inicia catch");
+                    resultado.Add("1");  // La entrada al catch también puede considerarse como una operación constante.
+
+                    string cuerpoCatch = ObtenerExpresionManual(catchClause.Block);
+                    if (!string.IsNullOrWhiteSpace(cuerpoCatch))
+                        resultado.Add($"({cuerpoCatch})");  // Analizar cuerpo del catch
+
+                    ConsolaVirtual.Escribir("→ Finaliza catch");
+                }
+                ///Finally
+                if (tryStmt.Finally != null)
+                {
+                    ConsolaVirtual.Escribir("→ Inicia finally");
+                    resultado.Add("1");  // La entrada al finally también puede considerarse como operación simple.
+
+                    string cuerpoFinally = ObtenerExpresionManual(tryStmt.Finally.Block);
+                    if (!string.IsNullOrWhiteSpace(cuerpoFinally))
+                        resultado.Add($"({cuerpoFinally})");  // Analizar cuerpo del finally
+
+                    ConsolaVirtual.Escribir("→ Finaliza finally");
+                }
+
+                break;
+
+
+
+
             case WhileStatementSyntax whileStmt:
                 ConsolaVirtual.Escribir($"[{whileStmt.Condition}] Detectado: while - comparación ␦ valor: {valoresOperacion["while_comparacion"]}");
                 resultado.Add(valoresOperacion["while_comparacion"]);
@@ -235,6 +289,7 @@ public class Asignacion
                 string cuerpoDoWhile = ObtenerExpresionManual(doStmt.Statement);
                 if (!string.IsNullOrWhiteSpace(cuerpoDoWhile)) resultado.Add($"n[{cuerpoDoWhile}]");
                 break;
+
 
             case ExpressionStatementSyntax exprStmt:
                 if (exprStmt.Expression is InvocationExpressionSyntax llamada &&
@@ -308,7 +363,7 @@ public class Asignacion
                     }
                 }
                 break;
-
+   
 
             default:
                 string sub = ObtenerExpresionManual(hijo);
@@ -322,10 +377,10 @@ public class Asignacion
 
     private void ProcesarExpresion(ExpressionSyntax expr, List<string> resultado)
     {
-        // ⚠️ Caso nuevo: paréntesis
+        //  Caso nuevo: paréntesis
         if (expr is ParenthesizedExpressionSyntax parentesis)
         {
-            // Recurse into the inner expression
+        // Recurse into the inner expression
             ProcesarExpresion(parentesis.Expression, resultado);
         }
         else if (expr is ElementAccessExpressionSyntax acceso)
