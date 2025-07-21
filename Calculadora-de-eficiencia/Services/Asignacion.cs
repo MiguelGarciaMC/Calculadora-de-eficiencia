@@ -1,11 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Calculadora_de_eficiencia.Services;
 using Calculadora_de_eficiencia.Utils;
 using MathNet.Symbolics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 public class Asignacion
 {
@@ -159,7 +160,8 @@ public class Asignacion
                 resultado.Add(valoresOperacion["for_incremento"]);
 
                 string cuerpo = ObtenerExpresionManual(forStmt.Statement);
-                resultado.Add($"n[{cuerpo}]");
+                if (!string.IsNullOrWhiteSpace(cuerpo))
+                    resultado.Add($"n*({cuerpo})");
                 break;
 
             case WhileStatementSyntax whileStmt:
@@ -340,12 +342,9 @@ public class Asignacion
 
     public void ResolverFormula(string expresion)
     {
-        ConsolaVirtual.Escribir("\n--- Resolución simbólica (con MathNet.Symbolics) ---");
-
-        //Detección para operaciones vacias
         if (string.IsNullOrWhiteSpace(expresion))
         {
-            ConsolaVirtual.Escribir("T(n) vacía no hay operaciones detectadas.");
+            ConsolaVirtual.Escribir("T(n) vacía. No hay operaciones detectadas.");
             return;
         }
 
@@ -353,26 +352,9 @@ public class Asignacion
                                .Replace("[", "(")
                                .Replace("n(", "n*(");
 
-        ConsolaVirtual.Escribir("Expandida: " + expr);
+        ConsolaVirtual.Escribir("\n--- Resolución simbólica y análisis de límite ---");
+        ConsolaVirtual.Escribir("Expresión formateada: " + expr);
 
-        try
-        {
-            var parsed = Infix.ParseOrThrow(expr);
-            var simplificada = Algebraic.Expand(parsed);
-            ConsolaVirtual.Escribir("T(n) simplificada ~ " + Infix.Format(simplificada));
-
-            ConsolaVirtual.Escribir("\n--- Análisis de cotas ---");
-            string simpl = Infix.Format(simplificada);
-            if (simpl.Contains("n^2"))
-                ConsolaVirtual.Escribir("Cota superior: O(n^2)\nCota promedio: aproximadamente cuadrática\nCota inferior: O(1)");
-            else if (simpl.Contains("n"))
-                ConsolaVirtual.Escribir("Cota superior: O(n)\nCota promedio: aproximadamente lineal\nCota inferior: O(1)");
-            else
-                ConsolaVirtual.Escribir("Cota superior: O(1)\nCota promedio: constante\nCota inferior: O(1)");
-        }
-        catch (Exception ex)
-        {
-            ConsolaVirtual.Escribir(" Error al resolver la expresión: " + ex.Message);
-        }
+        Operaciones.AnalizarLimite(expr);
     }
 }
