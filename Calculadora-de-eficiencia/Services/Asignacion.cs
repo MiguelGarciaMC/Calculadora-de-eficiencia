@@ -80,7 +80,7 @@ public class Asignacion
         foreach (var hijo in nodo.ChildNodes())
         {
             if (hijo is MethodDeclarationSyntax)
-                continue; // Ignora los metodos al analizar la clase
+                continue; // IGNORAR MÉTODOS al analizar la clase
 
             resultado.AddRange(ObtenerExpresionManualPorTipo(hijo));
         }
@@ -112,14 +112,14 @@ public class Asignacion
                 {
                     if (variable.Initializer != null)
                     {
-                        ConsolaVirtual.Escribir($"[{variable}] - detectado: declaración + asignación (local) con valor asignado de: {valoresOperacion["declaracion"]} + {valoresOperacion["asignacion"]}");
+                        ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración + asignación (local) ␦ valor: {valoresOperacion["declaracion"]} + {valoresOperacion["asignacion"]}");
                         resultado.Add(valoresOperacion["declaracion"]);
                         resultado.Add(valoresOperacion["asignacion"]);
                         ProcesarExpresion(variable.Initializer.Value, resultado);
                     }
                     else
                     {
-                        ConsolaVirtual.Escribir($"[{variable}] - detectado: declaración (local) con valor asignado de: {valoresOperacion["declaracion"]}");
+                        ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración (local) ␦ valor: {valoresOperacion["declaracion"]}");
                         resultado.Add(valoresOperacion["declaracion"]);
                     }
                 }
@@ -130,55 +130,57 @@ public class Asignacion
                 {
                     if (variable.Initializer != null)
                     {
-                        ConsolaVirtual.Escribir($"[{variable}] - detectado: declaración + asignación (campo) con valor asignado de: {valoresOperacion["declaracion"]} + {valoresOperacion["asignacion"]}");
+                        ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración + asignación (campo) ␦ valor: {valoresOperacion["declaracion"]} + {valoresOperacion["asignacion"]}");
                         resultado.Add(valoresOperacion["declaracion"]);
                         resultado.Add(valoresOperacion["asignacion"]);
                         ProcesarExpresion(variable.Initializer.Value, resultado);
                     }
                     else
                     {
-                        ConsolaVirtual.Escribir($"[{variable}] - detectado: declaración (campo) con valor asignado de: {valoresOperacion["declaracion"]}");
+                        ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración (campo) ␦ valor: {valoresOperacion["declaracion"]}");
                         resultado.Add(valoresOperacion["declaracion"]);
                     }
                 }
                 break;
 
             case AssignmentExpressionSyntax assign:
-                ConsolaVirtual.Escribir($"[{assign}] - detectado: asignación con valor asignado de: {valoresOperacion["asignacion"]}");
+                ConsolaVirtual.Escribir($"[{assign}] Detectado: asignación ␦ valor: {valoresOperacion["asignacion"]}");
                 resultado.Add(valoresOperacion["asignacion"]);
                 ProcesarExpresion(assign.Right, resultado);
                 break;
 
             case ForStatementSyntax forStmt:
+                // Si hay declaración dentro del for (ej: int i = 0)
                 if (forStmt.Declaration != null)
                 {
                     foreach (var variable in forStmt.Declaration.Variables)
                     {
                         if (variable.Initializer != null)
                         {
-                            ConsolaVirtual.Escribir($"[{variable}] - detectado: declaración + asignación (for) con valor asignado de: {valoresOperacion["declaracion"]} + {valoresOperacion["asignacion"]}");
+                            ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración + asignación (for) ␦ valor: {valoresOperacion["declaracion"]} + {valoresOperacion["asignacion"]}");
                             resultado.Add(valoresOperacion["declaracion"]);
                             resultado.Add(valoresOperacion["asignacion"]);
                             ProcesarExpresion(variable.Initializer.Value, resultado);
                         }
                         else
                         {
-                            ConsolaVirtual.Escribir($"[{variable}] - detectado: declaración (for) con valor asignado de: {valoresOperacion["declaracion"]}");
+                            ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración (for) ␦ valor: {valoresOperacion["declaracion"]}");
                             resultado.Add(valoresOperacion["declaracion"]);
                         }
                     }
                 }
 
+                // Inicializadores adicionales (ej: i = 0, j = 0, etc.)
                 foreach (var init in forStmt.Initializers)
                 {
-                    ConsolaVirtual.Escribir($"[{init}] - detectado: for - inicialización con valor asignado de: {valoresOperacion["for_inicializacion"]}");
+                    ConsolaVirtual.Escribir($"[{init}] Detectado: for - inicialización ␦ valor: {valoresOperacion["for_inicializacion"]}");
                     resultado.Add(valoresOperacion["for_inicializacion"]);
                 }
 
                 // Condición del for
                 if (forStmt.Condition != null)
                 {
-                    ConsolaVirtual.Escribir($"[{forStmt.Condition}] - detectado: for - comparación con valor asignado de: {valoresOperacion["for_comparacion"]}");
+                    ConsolaVirtual.Escribir($"[{forStmt.Condition}] Detectado: for - comparación ␦ valor: {valoresOperacion["for_comparacion"]}");
                     resultado.Add(valoresOperacion["for_comparacion"]);
                     ProcesarExpresion(forStmt.Condition, resultado, omitirComparaciones: true);
 
@@ -187,7 +189,7 @@ public class Asignacion
                 // Incrementos
                 foreach (var inc in forStmt.Incrementors)
                 {
-                    ConsolaVirtual.Escribir($"[{inc}] - detectado: for - incremento con valor asignado de: {valoresOperacion["for_incremento"]}");
+                    ConsolaVirtual.Escribir($"[{inc}] Detectado: for - incremento ␦ valor: {valoresOperacion["for_incremento"]}");
                     resultado.Add(valoresOperacion["for_incremento"]);
                 }
 
@@ -195,11 +197,12 @@ public class Asignacion
                 string cuerpo = ObtenerExpresionManual(forStmt.Statement);
                 if (!string.IsNullOrWhiteSpace(cuerpo))
                     resultado.Add($"n[{cuerpo}]");
+
                 break;
 
 
             case WhileStatementSyntax whileStmt:
-                ConsolaVirtual.Escribir($"[{whileStmt.Condition}] - detectado: while - comparación con valor asignado de: {valoresOperacion["while_comparacion"]}");
+                ConsolaVirtual.Escribir($"[{whileStmt.Condition}] Detectado: while - comparación ␦ valor: {valoresOperacion["while_comparacion"]}");
                 resultado.Add(valoresOperacion["while_comparacion"]);
                 ProcesarExpresion(whileStmt.Condition, resultado, omitirComparaciones: true);
 
@@ -208,7 +211,7 @@ public class Asignacion
                 break;
 
             case DoStatementSyntax doStmt:
-                ConsolaVirtual.Escribir($"[{doStmt.Condition}] - detectado: do-while - comparación con valor asignado de: {valoresOperacion["dowhile_comparacion"]}");
+                ConsolaVirtual.Escribir($"[{doStmt.Condition}] Detectado: do-while - comparación ␦ valor: {valoresOperacion["dowhile_comparacion"]}");
                 resultado.Add(valoresOperacion["dowhile_comparacion"]);
                 ProcesarExpresion(doStmt.Condition, resultado, omitirComparaciones: true);
 
@@ -221,7 +224,7 @@ public class Asignacion
                 if (exprStmt.Expression is InvocationExpressionSyntax llamada &&
                     llamada.Expression.ToString().Contains("Console.WriteLine"))
                 {
-                    ConsolaVirtual.Escribir($"[{exprStmt}] - detectado: Console.WriteLine con valor asignado de: {valoresOperacion["console_write"]}");
+                    ConsolaVirtual.Escribir($"[{exprStmt}] Detectado: Console.WriteLine ␦ valor: {valoresOperacion["console_write"]}");
                     resultado.Add(valoresOperacion["console_write"]);
 
                     foreach (var arg in llamada.ArgumentList.Arguments)
@@ -232,7 +235,7 @@ public class Asignacion
                 }
                 else if (exprStmt.Expression is AssignmentExpressionSyntax exprAssign)
                 {
-                    ConsolaVirtual.Escribir($"[{exprAssign}] - detectado: asignación (expresión) con valor asignado de: {valoresOperacion["asignacion"]}");
+                    ConsolaVirtual.Escribir($"[{exprAssign}] Detectado: asignación (expresión) ␦ valor: {valoresOperacion["asignacion"]}");
                     resultado.Add(valoresOperacion["asignacion"]);
                     ProcesarExpresion(exprAssign.Right, resultado);
                 }
@@ -240,14 +243,14 @@ public class Asignacion
                          (postUnary.IsKind(SyntaxKind.PostIncrementExpression) ||
                           postUnary.IsKind(SyntaxKind.PostDecrementExpression)))
                 {
-                    ConsolaVirtual.Escribir($"[{postUnary}] - detectado: incremento/decremento con valor asignado de: 1");
+                    ConsolaVirtual.Escribir($"[{postUnary}] Detectado: incremento/decremento ␦ valor: 1");
                     resultado.Add("1");
                 }
                 else if (exprStmt.Expression is PrefixUnaryExpressionSyntax preUnary &&
                          (preUnary.IsKind(SyntaxKind.PreIncrementExpression) ||
                           preUnary.IsKind(SyntaxKind.PreDecrementExpression)))
                 {
-                    ConsolaVirtual.Escribir($"[{preUnary}] - detectado: incremento/decremento con valor asignado de: 1");
+                    ConsolaVirtual.Escribir($"[{preUnary}] Detectado: incremento/decremento ␦ valor: 1");
                     resultado.Add("1");
                 }
                 break;
@@ -291,7 +294,7 @@ public class Asignacion
                 break;
 
             case SwitchStatementSyntax switchStmt:
-                ConsolaVirtual.Escribir($"[{switchStmt}] Detectado: switch ␦ valor: { valoresOperacion["switch"]}");
+                ConsolaVirtual.Escribir($"[{switchStmt}] Detectado: switch ␦ valor: {valoresOperacion["switch"]}");
                 resultado.Add(valoresOperacion["switch"]);
 
                 foreach (var section in switchStmt.Sections)
@@ -342,7 +345,7 @@ public class Asignacion
         }
         else if (expr is ElementAccessExpressionSyntax acceso)
         {
-            ConsolaVirtual.Escribir($"[{acceso}] - detectado: acceso a arreglo con valor asignado de: {valoresOperacion["acceso_arreglo"]}");
+            ConsolaVirtual.Escribir($"[{acceso}] Detectado: acceso a arreglo ␦ valor: {valoresOperacion["acceso_arreglo"]}");
             resultado.Add(valoresOperacion["acceso_arreglo"]);
 
             // Analizar todos los índices dentro de los corchetes
@@ -366,7 +369,7 @@ public class Asignacion
                 bin.IsKind(SyntaxKind.MultiplyExpression) ||
                 bin.IsKind(SyntaxKind.DivideExpression))
             {
-                ConsolaVirtual.Escribir($"[{bin}] - detectado: operación aritmética con valor asignado de: {valoresOperacion["aritmetica"]}");
+                ConsolaVirtual.Escribir($"[{bin}] Detectado: operación aritmética ␦ valor: {valoresOperacion["aritmetica"]}");
                 resultado.Add(valoresOperacion["aritmetica"]);
             }
             else if (bin.IsKind(SyntaxKind.EqualsExpression) ||
@@ -378,7 +381,7 @@ public class Asignacion
             {
                 if (!omitirComparaciones)
                 {
-                    ConsolaVirtual.Escribir($"[{bin}] - detectado: comparación lógica con valor asignado de: {valoresOperacion["comparacion"]}");
+                    ConsolaVirtual.Escribir($"[{bin}] Detectado: comparación lógica ␦ valor: {valoresOperacion["comparacion"]}");
                     resultado.Add(valoresOperacion["comparacion"]);
                 }
             }
@@ -386,7 +389,7 @@ public class Asignacion
             else if (bin.IsKind(SyntaxKind.LogicalAndExpression) ||
                      bin.IsKind(SyntaxKind.LogicalOrExpression))
             {
-                ConsolaVirtual.Escribir($"[{bin}] - detectado: operación lógica con valor asignado de: {valoresOperacion["logica"]}");
+                ConsolaVirtual.Escribir($"[{bin}] Detectado: operación lógica ␦ valor: {valoresOperacion["logica"]}");
                 resultado.Add(valoresOperacion["logica"]);
             }
         }
