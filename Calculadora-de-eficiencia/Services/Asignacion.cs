@@ -24,6 +24,8 @@ public class Asignacion
         { "dowhile_comparacion", "n + 1" },
         { "acceso_arreglo", "1" },
         { "foreach", "n" }///foreach
+        { "switch", "1" },
+        { "case", "1" }
     };
 
     public void Recorrer(SyntaxNode nodo)
@@ -161,6 +163,7 @@ public class Asignacion
 
     private List<string> ObtenerExpresionManualPorTipo(SyntaxNode hijo)
     {
+        ConsolaVirtual.Escribir($"→ Analizando nodo tipo: {hijo.Kind()}");
         var resultado = new List<string>();
 
         switch (hijo)
@@ -208,20 +211,56 @@ public class Asignacion
                 break;
 
             case ForStatementSyntax forStmt:
-                ConsolaVirtual.Escribir($"[{forStmt.Initializers}] Detectado: for - inicialización ␦ valor: {valoresOperacion["for_inicializacion"]}");
-                resultado.Add(valoresOperacion["for_inicializacion"]);
+                // Si hay declaración dentro del for (ej: int i = 0)
+                if (forStmt.Declaration != null)
+                {
+                    foreach (var variable in forStmt.Declaration.Variables)
+                    {
+                        if (variable.Initializer != null)
+                        {
+                            ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración + asignación (for) ␦ valor: {valoresOperacion["declaracion"]} + {valoresOperacion["asignacion"]}");
+                            resultado.Add(valoresOperacion["declaracion"]);
+                            resultado.Add(valoresOperacion["asignacion"]);
+                            ProcesarExpresion(variable.Initializer.Value, resultado);
+                        }
+                        else
+                        {
+                            ConsolaVirtual.Escribir($"[{variable}] Detectado: declaración (for) ␦ valor: {valoresOperacion["declaracion"]}");
+                            resultado.Add(valoresOperacion["declaracion"]);
+                        }
+                    }
+                }
 
-                ConsolaVirtual.Escribir($"[{forStmt.Condition}] Detectado: for - comparación ␦ valor: {valoresOperacion["for_comparacion"]}");
-                resultado.Add(valoresOperacion["for_comparacion"]);
+                // Inicializadores adicionales (ej: i = 0, j = 0, etc.)
+                foreach (var init in forStmt.Initializers)
+                {
+                    ConsolaVirtual.Escribir($"[{init}] Detectado: for - inicialización ␦ valor: {valoresOperacion["for_inicializacion"]}");
+                    resultado.Add(valoresOperacion["for_inicializacion"]);
+                }
 
-                ConsolaVirtual.Escribir($"[{forStmt.Incrementors}] Detectado: for - incremento ␦ valor: {valoresOperacion["for_incremento"]}");
-                resultado.Add(valoresOperacion["for_incremento"]);
+                // Condición del for
+                if (forStmt.Condition != null)
+                {
+                    ConsolaVirtual.Escribir($"[{forStmt.Condition}] Detectado: for - comparación ␦ valor: {valoresOperacion["for_comparacion"]}");
+                    resultado.Add(valoresOperacion["for_comparacion"]);
+                    ProcesarExpresion(forStmt.Condition, resultado, omitirComparaciones: true);
 
+                }
+
+                // Incrementos
+                foreach (var inc in forStmt.Incrementors)
+                {
+                    ConsolaVirtual.Escribir($"[{inc}] Detectado: for - incremento ␦ valor: {valoresOperacion["for_incremento"]}");
+                    resultado.Add(valoresOperacion["for_incremento"]);
+                }
+
+                // Cuerpo del for
                 string cuerpo = ObtenerExpresionManual(forStmt.Statement);
-                resultado.Add($"n[{cuerpo}]");
+                if (!string.IsNullOrWhiteSpace(cuerpo))
+                    resultado.Add($"n[{cuerpo}]");
+
                 break;
 
-            ///foreach
             case ForEachStatementSyntax foreachStmt:
                 ConsolaVirtual.Escribir($"[{foreachStmt.Identifier.Text} in {foreachStmt.Expression}] Detectado: foreach ␦ valor: n");
                 resultado.Add("n");  // Cabecera foreach
@@ -270,13 +309,11 @@ public class Asignacion
                 }
 
                 break;
-
-
-
-
+            
             case WhileStatementSyntax whileStmt:
                 ConsolaVirtual.Escribir($"[{whileStmt.Condition}] Detectado: while - comparación ␦ valor: {valoresOperacion["while_comparacion"]}");
                 resultado.Add(valoresOperacion["while_comparacion"]);
+                ProcesarExpresion(whileStmt.Condition, resultado, omitirComparaciones: true);
 
                 string cuerpoWhile = ObtenerExpresionManual(whileStmt.Statement);
                 if (!string.IsNullOrWhiteSpace(cuerpoWhile)) resultado.Add($"n[{cuerpoWhile}]");
@@ -285,6 +322,8 @@ public class Asignacion
             case DoStatementSyntax doStmt:
                 ConsolaVirtual.Escribir($"[{doStmt.Condition}] Detectado: do-while - comparación ␦ valor: {valoresOperacion["dowhile_comparacion"]}");
                 resultado.Add(valoresOperacion["dowhile_comparacion"]);
+                ProcesarExpresion(doStmt.Condition, resultado, omitirComparaciones: true);
+
 
                 string cuerpoDoWhile = ObtenerExpresionManual(doStmt.Statement);
                 if (!string.IsNullOrWhiteSpace(cuerpoDoWhile)) resultado.Add($"n[{cuerpoDoWhile}]");
@@ -363,19 +402,50 @@ public class Asignacion
                     }
                 }
                 break;
-   
+
+            case SwitchStatementSyntax switchStmt:
+                ConsolaVirtual.Escribir($"[{switchStmt}] Detectado: switch ␦ valor: {valoresOperacion["switch"]}");
+                resultado.Add(valoresOperacion["switch"]);
+
+                foreach (var section in switchStmt.Sections)
+                {
+                    ConsolaVirtual.Escribir("→ Inicia case");
+                    ConsolaVirtual.Escribir($"→ Detectado: case ␦ valor: {valoresOperacion["case"]}");
+                    resultado.Add(valoresOperacion["case"]);
+
+                    foreach (var statement in section.Statements)
+                    {
+                        var expresiones = ObtenerExpresionManualPorTipo(statement);
+                        foreach (var ex in expresiones)
+                        {
+                            ConsolaVirtual.Escribir($"→ Subexpresión dentro de case: {ex}");
+                            resultado.Add($"({ex})");
+                        }
+                    }
+
+
+                    ConsolaVirtual.Escribir("→ Finaliza case");
+                }
+
+
+                break;
 
             default:
+                ConsolaVirtual.Escribir($"[{hijo}] Nodo no clasificado directamente, se analiza internamente.");
                 string sub = ObtenerExpresionManual(hijo);
                 if (!string.IsNullOrWhiteSpace(sub))
+                {
+                    ConsolaVirtual.Escribir($"→ Subexpresión encontrada: {sub}");
                     resultado.Add(sub);
+                }
                 break;
+
         }
 
         return resultado;
     }
 
-    private void ProcesarExpresion(ExpressionSyntax expr, List<string> resultado)
+    private void ProcesarExpresion(ExpressionSyntax expr, List<string> resultado, bool omitirComparaciones = false)
     {
         //  Caso nuevo: paréntesis
         if (expr is ParenthesizedExpressionSyntax parentesis)
@@ -413,15 +483,19 @@ public class Asignacion
                 resultado.Add(valoresOperacion["aritmetica"]);
             }
             else if (bin.IsKind(SyntaxKind.EqualsExpression) ||
-                     bin.IsKind(SyntaxKind.NotEqualsExpression) ||
-                     bin.IsKind(SyntaxKind.LessThanExpression) ||
-                     bin.IsKind(SyntaxKind.LessThanOrEqualExpression) ||
-                     bin.IsKind(SyntaxKind.GreaterThanExpression) ||
-                     bin.IsKind(SyntaxKind.GreaterThanOrEqualExpression))
+                bin.IsKind(SyntaxKind.NotEqualsExpression) ||
+                bin.IsKind(SyntaxKind.LessThanExpression) ||
+                bin.IsKind(SyntaxKind.LessThanOrEqualExpression) ||
+                bin.IsKind(SyntaxKind.GreaterThanExpression) ||
+                bin.IsKind(SyntaxKind.GreaterThanOrEqualExpression))
             {
-                ConsolaVirtual.Escribir($"[{bin}] Detectado: comparación lógica ␦ valor: {valoresOperacion["comparacion"]}");
-                resultado.Add(valoresOperacion["comparacion"]);
+                if (!omitirComparaciones)
+                {
+                    ConsolaVirtual.Escribir($"[{bin}] Detectado: comparación lógica ␦ valor: {valoresOperacion["comparacion"]}");
+                    resultado.Add(valoresOperacion["comparacion"]);
+                }
             }
+
             else if (bin.IsKind(SyntaxKind.LogicalAndExpression) ||
                      bin.IsKind(SyntaxKind.LogicalOrExpression))
             {
@@ -435,6 +509,13 @@ public class Asignacion
     public string ResolverFormula(string expresion)
     {
         ConsolaVirtual.Escribir("\n--- Resolución simbólica (con MathNet.Symbolics) ---");
+
+        //Detección para operaciones vacias
+        if (string.IsNullOrWhiteSpace(expresion))
+        {
+            ConsolaVirtual.Escribir("T(n) vacía no hay operaciones detectadas.");
+            return;
+        }
 
         string expr = expresion.Replace("]", ")")
                                .Replace("[", "(")
