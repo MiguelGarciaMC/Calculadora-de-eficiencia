@@ -102,6 +102,7 @@ public class Asignacion
 
     private List<string> ObtenerExpresionManualPorTipo(SyntaxNode hijo)
     {
+        ConsolaVirtual.Escribir($"→ Analizando nodo tipo: {hijo.Kind()}");
         var resultado = new List<string>();
 
         switch (hijo)
@@ -298,24 +299,37 @@ public class Asignacion
 
                 foreach (var section in switchStmt.Sections)
                 {
-                    //Contar cada sección (case/default) como una unidad
-                    ConsolaVirtual.Escribir($" → Detectado: case/default ␦ valor: { valoresOperacion["case"]}");
+                    ConsolaVirtual.Escribir("→ Inicia case");
+                    ConsolaVirtual.Escribir($"→ Detectado: case ␦ valor: {valoresOperacion["case"]}");
+                    resultado.Add(valoresOperacion["case"]);
 
-                    //Analizar instrucciones dentro del case
                     foreach (var statement in section.Statements)
                     {
-                        string subExpresion = ObtenerExpresionManual(statement);
-                        if (!string.IsNullOrWhiteSpace(subExpresion))
-                            resultado.Add($"({subExpresion}");
+                        var expresiones = ObtenerExpresionManualPorTipo(statement);
+                        foreach (var ex in expresiones)
+                        {
+                            ConsolaVirtual.Escribir($"→ Subexpresión dentro de case: {ex}");
+                            resultado.Add($"({ex})");
+                        }
                     }
+
+
+                    ConsolaVirtual.Escribir("→ Finaliza case");
                 }
+
+
                 break;
 
             default:
+                ConsolaVirtual.Escribir($"[{hijo}] Nodo no clasificado directamente, se analiza internamente.");
                 string sub = ObtenerExpresionManual(hijo);
                 if (!string.IsNullOrWhiteSpace(sub))
+                {
+                    ConsolaVirtual.Escribir($"→ Subexpresión encontrada: {sub}");
                     resultado.Add(sub);
+                }
                 break;
+
         }
 
         return resultado;
