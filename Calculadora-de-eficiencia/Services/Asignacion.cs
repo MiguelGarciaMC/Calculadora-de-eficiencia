@@ -294,7 +294,7 @@ public class Asignacion
                 break;
 
             case SwitchStatementSyntax switchStmt:
-                ConsolaVirtual.Escribir($"[{switchStmt}] Detectado: switch ␦ valor: { valoresOperacion["switch"]}");
+                ConsolaVirtual.Escribir($"[{switchStmt}] Detectado: switch ␦ valor: {valoresOperacion["switch"]}");
                 resultado.Add(valoresOperacion["switch"]);
 
                 foreach (var section in switchStmt.Sections)
