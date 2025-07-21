@@ -23,6 +23,7 @@ public class Asignacion
         { "while_comparacion", "n + 1" },
         { "dowhile_comparacion", "n + 1" },
         { "acceso_arreglo", "1" },
+        { "foreach", "n" }///foreach
         { "switch", "1" },
         { "case", "1" }
     };
@@ -39,16 +40,30 @@ public class Asignacion
             return;
         }
 
+        var expresionesSimplificadas = new List<string>();
+
         foreach (var clase in clases)
         {
             ConsolaVirtual.Escribir($"\n===== CLASE DETECTADA: {clase.Identifier.Text} =====");
 
-            // Analizar SOLO campos y propiedades de la clase, ignorando sus métodos
             string resultadoClase = ObtenerExpresionManual_SoloCuerpoClase(clase);
 
             ConsolaVirtual.Escribir($"\n--- Operaciones internas de la clase {clase.Identifier.Text} ---");
-            ConsolaVirtual.Escribir("T(n) = " + resultadoClase);
-            ResolverFormula(resultadoClase);
+            if (string.IsNullOrWhiteSpace(resultadoClase))
+            {
+                ConsolaVirtual.Escribir("T(n) = 0");
+                ConsolaVirtual.Escribir($"Total de operaciones detectadas en la clase: 0");
+            }
+            else
+            {
+                ConsolaVirtual.Escribir("T(n) = " + resultadoClase);
+
+                int totalOperacionesClase = resultadoClase.Split('+').Select(x => x.Trim()).Count(x => !string.IsNullOrEmpty(x));
+                ConsolaVirtual.Escribir($"Total de operaciones detectadas en la clase: {totalOperacionesClase}");
+
+                string simplificadaClase = ResolverFormula(resultadoClase);
+                expresionesSimplificadas.Add(simplificadaClase);
+            }
 
             var metodosPublicos = clase.Members
                 .OfType<MethodDeclarationSyntax>()
@@ -67,12 +82,58 @@ public class Asignacion
                 string resultadoMetodo = ObtenerExpresionManual(metodo);
 
                 ConsolaVirtual.Escribir($"T(n) = {resultadoMetodo}");
-                ResolverFormula(resultadoMetodo);
+
+                int totalOperacionesMetodo = resultadoMetodo.Split('+').Select(x => x.Trim()).Count(x => !string.IsNullOrEmpty(x));
+                ConsolaVirtual.Escribir($"Total de operaciones detectadas en el método: {totalOperacionesMetodo}");
+
+                string simplificadaMetodo = ResolverFormula(resultadoMetodo);
+                expresionesSimplificadas.Add(simplificadaMetodo);
             }
         }
+
+        ConsolaVirtual.Escribir("\n\ntotal DE T(n) simplificada");
+        foreach (var expr in expresionesSimplificadas)
+        {
+            ConsolaVirtual.Escribir("T(n) simplificada ~ " + expr);
+        }
+
+        // --- Suma total formal ---
+        int totalConstante = 0;
+        int totalLineal = 0;
+        int totalCuadratica = 0;
+
+        foreach (var expr in expresionesSimplificadas)
+        {
+            var partes = expr.Replace(" ", "").Split('+');
+
+            foreach (var parte in partes)
+            {
+                if (parte == "n")
+                    totalLineal += 1;
+                else if (parte == "n^2")
+                    totalCuadratica += 1;
+                else if (parte.EndsWith("*n^2"))
+                {
+                    int coef = int.Parse(parte.Replace("*n^2", ""));
+                    totalCuadratica += coef;
+                }
+                else if (parte.EndsWith("*n"))
+                {
+                    int coef = int.Parse(parte.Replace("*n", ""));
+                    totalLineal += coef;
+                }
+                else
+                {
+                    if (int.TryParse(parte, out int constante))
+                        totalConstante += constante;
+                }
+            }
+        }
+
+        ConsolaVirtual.Escribir("\nSuma");
+        ConsolaVirtual.Escribir($"T(n) simplificada total= {totalConstante} + {totalLineal}*n + {totalCuadratica}*n^2");
     }
 
-    // Analiza solo el cuerpo real de la clase, ignorando métodos
     private string ObtenerExpresionManual_SoloCuerpoClase(SyntaxNode nodo)
     {
         var resultado = new List<string>();
@@ -80,7 +141,7 @@ public class Asignacion
         foreach (var hijo in nodo.ChildNodes())
         {
             if (hijo is MethodDeclarationSyntax)
-                continue; // IGNORAR MÉTODOS al analizar la clase
+                continue;
 
             resultado.AddRange(ObtenerExpresionManualPorTipo(hijo));
         }
@@ -200,7 +261,55 @@ public class Asignacion
 
                 break;
 
+            case ForEachStatementSyntax foreachStmt:
+                ConsolaVirtual.Escribir($"[{foreachStmt.Identifier.Text} in {foreachStmt.Expression}] Detectado: foreach ␦ valor: n");
+                resultado.Add("n");  // Cabecera foreach
 
+                ConsolaVirtual.Escribir("→ Inicia foreach cuerpo");
+                string cuerpoForeach = ObtenerExpresionManual(foreachStmt.Statement);
+
+                if (!string.IsNullOrWhiteSpace(cuerpoForeach))
+                    resultado.Add($"n[{cuerpoForeach}]");  // El cuerpo del foreach se repite n veces
+
+                ConsolaVirtual.Escribir("→ Finaliza foreach cuerpo");
+                break;
+            ///Try
+            case TryStatementSyntax tryStmt:
+                ConsolaVirtual.Escribir("→ Inicia try");
+                resultado.Add("1");  // La entrada al try cuenta como una operación constante.
+
+                string cuerpoTry = ObtenerExpresionManual(tryStmt.Block);
+                if (!string.IsNullOrWhiteSpace(cuerpoTry))
+                    resultado.Add($"({cuerpoTry})");  // Analizar cuerpo del try
+
+                ConsolaVirtual.Escribir("→ Finaliza try");
+                ///Catches
+                foreach (var catchClause in tryStmt.Catches)
+                {
+                    ConsolaVirtual.Escribir("→ Inicia catch");
+                    resultado.Add("1");  // La entrada al catch también puede considerarse como una operación constante.
+
+                    string cuerpoCatch = ObtenerExpresionManual(catchClause.Block);
+                    if (!string.IsNullOrWhiteSpace(cuerpoCatch))
+                        resultado.Add($"({cuerpoCatch})");  // Analizar cuerpo del catch
+
+                    ConsolaVirtual.Escribir("→ Finaliza catch");
+                }
+                ///Finally
+                if (tryStmt.Finally != null)
+                {
+                    ConsolaVirtual.Escribir("→ Inicia finally");
+                    resultado.Add("1");  // La entrada al finally también puede considerarse como operación simple.
+
+                    string cuerpoFinally = ObtenerExpresionManual(tryStmt.Finally.Block);
+                    if (!string.IsNullOrWhiteSpace(cuerpoFinally))
+                        resultado.Add($"({cuerpoFinally})");  // Analizar cuerpo del finally
+
+                    ConsolaVirtual.Escribir("→ Finaliza finally");
+                }
+
+                break;
+            
             case WhileStatementSyntax whileStmt:
                 ConsolaVirtual.Escribir($"[{whileStmt.Condition}] Detectado: while - comparación ␦ valor: {valoresOperacion["while_comparacion"]}");
                 resultado.Add(valoresOperacion["while_comparacion"]);
@@ -219,6 +328,7 @@ public class Asignacion
                 string cuerpoDoWhile = ObtenerExpresionManual(doStmt.Statement);
                 if (!string.IsNullOrWhiteSpace(cuerpoDoWhile)) resultado.Add($"n[{cuerpoDoWhile}]");
                 break;
+
 
             case ExpressionStatementSyntax exprStmt:
                 if (exprStmt.Expression is InvocationExpressionSyntax llamada &&
@@ -337,10 +447,10 @@ public class Asignacion
 
     private void ProcesarExpresion(ExpressionSyntax expr, List<string> resultado, bool omitirComparaciones = false)
     {
-        // Caso nuevo: paréntesis
+        //  Caso nuevo: paréntesis
         if (expr is ParenthesizedExpressionSyntax parentesis)
         {
-            // Recurse into the inner expression
+        // Recurse into the inner expression
             ProcesarExpresion(parentesis.Expression, resultado);
         }
         else if (expr is ElementAccessExpressionSyntax acceso)
@@ -396,8 +506,7 @@ public class Asignacion
         // Si quieres extender más tipos de expresiones, puedes seguir con otros `else if`
     }
 
-
-    public void ResolverFormula(string expresion)
+    public string ResolverFormula(string expresion)
     {
         ConsolaVirtual.Escribir("\n--- Resolución simbólica (con MathNet.Symbolics) ---");
 
@@ -418,20 +527,25 @@ public class Asignacion
         {
             var parsed = Infix.ParseOrThrow(expr);
             var simplificada = Algebraic.Expand(parsed);
-            ConsolaVirtual.Escribir("T(n) simplificada ~ " + Infix.Format(simplificada));
+            string resultado = Infix.Format(simplificada);
+
+            ConsolaVirtual.Escribir("T(n) simplificada ~ " + resultado);
 
             ConsolaVirtual.Escribir("\n--- Análisis de cotas ---");
-            string simpl = Infix.Format(simplificada);
-            if (simpl.Contains("n^2"))
+            if (resultado.Contains("n^2"))
                 ConsolaVirtual.Escribir("Cota superior: O(n^2)\nCota promedio: aproximadamente cuadrática\nCota inferior: O(1)");
-            else if (simpl.Contains("n"))
+            else if (resultado.Contains("n"))
                 ConsolaVirtual.Escribir("Cota superior: O(n)\nCota promedio: aproximadamente lineal\nCota inferior: O(1)");
             else
                 ConsolaVirtual.Escribir("Cota superior: O(1)\nCota promedio: constante\nCota inferior: O(1)");
+
+            return resultado;
         }
         catch (Exception ex)
         {
             ConsolaVirtual.Escribir(" Error al resolver la expresión: " + ex.Message);
+            return "Error";
         }
     }
 }
+
