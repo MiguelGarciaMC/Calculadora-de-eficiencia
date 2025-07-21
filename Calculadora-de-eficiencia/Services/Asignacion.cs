@@ -23,7 +23,7 @@ public class Asignacion
         { "while_comparacion", "n + 1" },
         { "dowhile_comparacion", "n + 1" },
         { "acceso_arreglo", "1" },
-        { "foreach", "n" }///foreach
+        { "foreach", "n" },
         { "switch", "1" },
         { "case", "1" }
     };
@@ -514,7 +514,7 @@ public class Asignacion
         if (string.IsNullOrWhiteSpace(expresion))
         {
             ConsolaVirtual.Escribir("T(n) vacía no hay operaciones detectadas.");
-            return;
+            return "0";
         }
 
         string expr = expresion.Replace("]", ")")
