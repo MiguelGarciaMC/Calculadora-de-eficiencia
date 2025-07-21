@@ -404,18 +404,13 @@ public class Asignacion
 
             case IfStatementSyntax ifStmt:
                 ConsolaVirtual.Escribir("→ Inicia if");
+                ProcesarExpresion(ifStmt.Condition, resultado);  // Procesa condición del if
 
-                List<string> caminosCondicionales = new();
-
-                // Procesa if principal
-                ProcesarExpresion(ifStmt.Condition, resultado);  // condición común
                 string cuerpoIf = ObtenerExpresionManual(ifStmt.Statement);
                 if (!string.IsNullOrWhiteSpace(cuerpoIf))
-                {
-                    caminosCondicionales.Add($"({cuerpoIf})");
-                }
+                    resultado.Add($"({cuerpoIf})");
+                ConsolaVirtual.Escribir("→ Finaliza if");
 
-                // Procesa else if y else
                 var elseNodo = ifStmt.Else;
 
                 while (elseNodo != null)
@@ -423,12 +418,11 @@ public class Asignacion
                     if (elseNodo.Statement is IfStatementSyntax elseIfStmt)
                     {
                         ConsolaVirtual.Escribir("→ Inicia else if");
-                        ProcesarExpresion(elseIfStmt.Condition, resultado);
+                        ProcesarExpresion(elseIfStmt.Condition, resultado);  // Procesa condición del else if
 
                         string cuerpoElseIf = ObtenerExpresionManual(elseIfStmt.Statement);
                         if (!string.IsNullOrWhiteSpace(cuerpoElseIf))
-                            caminosCondicionales.Add($"({cuerpoElseIf})");
-
+                            resultado.Add($"({cuerpoElseIf})");
                         ConsolaVirtual.Escribir("→ Finaliza else if");
 
                         elseNodo = elseIfStmt.Else;
@@ -439,37 +433,14 @@ public class Asignacion
 
                         string cuerpoElse = ObtenerExpresionManual(elseNodo.Statement);
                         if (!string.IsNullOrWhiteSpace(cuerpoElse))
-                            caminosCondicionales.Add($"({cuerpoElse})");
-
+                            resultado.Add($"({cuerpoElse})");
                         ConsolaVirtual.Escribir("→ Finaliza else");
+
                         break;
                     }
                 }
-
-                // Mostrar y comparar todos los caminos
-                ConsolaVirtual.Escribir("→ Evaluando caminos posibles de if/else:");
-                List<(string expr, int peso)> caminosEvaluados = new();
-                foreach (var camino in caminosCondicionales)
-                {
-                    string simplificado = ResolverFormula(camino);
-                    int peso = EvaluarComplejidad(simplificado);
-                    caminosEvaluados.Add((simplificado, peso));
-                    ConsolaVirtual.Escribir($"→ Camino posible: {simplificado}  → peso estimado: {peso}");
-                }
-
-                if (caminosEvaluados.Count > 0)
-                {
-                    var max = caminosEvaluados.MaxBy(x => x.peso);
-                    var min = caminosEvaluados.MinBy(x => x.peso);
-
-                    ConsolaVirtual.Escribir($"→ Cota superior por camino más costoso: {max.expr}");
-                    ConsolaVirtual.Escribir($"→ Cota inferior por camino más barato: {min.expr}");
-
-                    resultado.Add($"({max.expr})");  // Elegimos el camino de mayor peso
-                }
-
-                ConsolaVirtual.Escribir("→ Finaliza if");
                 break;
+
 
 
 
