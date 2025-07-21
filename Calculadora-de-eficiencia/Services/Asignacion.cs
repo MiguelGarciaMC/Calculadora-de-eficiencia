@@ -403,32 +403,32 @@ public class Asignacion
                 }
                 break;
 
-            case SwitchStatementSyntax switchStmt:
-                ConsolaVirtual.Escribir($"[{switchStmt}] Detectado: switch ␦ valor: {valoresOperacion["switch"]}");
-                resultado.Add(valoresOperacion["switch"]);
+       case SwitchStatementSyntax switchStmt:
+    ConsolaVirtual.Escribir($"[{switchStmt}] Detectado: switch ␦ valor: {valoresOperacion["switch"]}");
+    resultado.Add(valoresOperacion["switch"]);
 
-                foreach (var section in switchStmt.Sections)
-                {
-                    ConsolaVirtual.Escribir("→ Inicia case");
-                    ConsolaVirtual.Escribir($"→ Detectado: case ␦ valor: {valoresOperacion["case"]}");
-                    resultado.Add(valoresOperacion["case"]);
+    foreach (var section in switchStmt.Sections)
+    {
+        ConsolaVirtual.Escribir("→ Inicia case");
+        ConsolaVirtual.Escribir($"→ Detectado: case ␦ valor: {valoresOperacion["case"]}");
+        resultado.Add(valoresOperacion["case"]);
 
-                    foreach (var statement in section.Statements)
-                    {
-                        var expresiones = ObtenerExpresionManualPorTipo(statement);
-                        foreach (var ex in expresiones)
-                        {
-                            ConsolaVirtual.Escribir($"→ Subexpresión dentro de case: {ex}");
-                            resultado.Add($"({ex})");
-                        }
-                    }
+        foreach (var statement in section.Statements)
+        {
+            var expresiones = ObtenerExpresionManualPorTipo(statement);
 
+            foreach (var ex in expresiones)
+            {
+                ConsolaVirtual.Escribir($"→ Subexpresión dentro de case: {ex}");   // <<< ELIMINA ESTA LÍNEA
+                resultado.Add($"({ex})");
+            }
+        }
 
-                    ConsolaVirtual.Escribir("→ Finaliza case");
-                }
+        ConsolaVirtual.Escribir("→ Finaliza case");
+    }
 
+    break;
 
-                break;
 
             default:
                 ConsolaVirtual.Escribir($"[{hijo}] Nodo no clasificado directamente, se analiza internamente.");
