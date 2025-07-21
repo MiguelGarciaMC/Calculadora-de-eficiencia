@@ -134,6 +134,43 @@ public class Asignacion
         ConsolaVirtual.Escribir($"T(n) simplificada total= {totalConstante} + {totalLineal}*n + {totalCuadratica}*n^2");
     }
 
+    private int EvaluarComplejidad(string formula)
+    {
+        try
+        {
+            var parsed = Infix.ParseOrThrow(formula.Replace("n(", "n*(").Replace("[", "(").Replace("]", ")"));
+            var simplificada = Algebraic.Expand(parsed);
+            string result = Infix.Format(simplificada);
+
+            // Solo cuenta n^2 como 100, n como 10, y constante como 1 para comparación
+            int score = 0;
+            foreach (var term in result.Replace(" ", "").Split('+'))
+            {
+                if (term.Contains("n^2"))
+                {
+                    int coef = term.Contains("*") ? int.Parse(term.Split("*")[0]) : 1;
+                    score += coef * 100;
+                }
+                else if (term.Contains("n"))
+                {
+                    int coef = term.Contains("*") ? int.Parse(term.Split("*")[0]) : 1;
+                    score += coef * 10;
+                }
+                else
+                {
+                    int.TryParse(term, out int c);
+                    score += c;
+                }
+            }
+            return score;
+        }
+        catch
+        {
+            return int.MaxValue;  // Si falla, consideramos que no se puede comparar bien
+        }
+    }
+
+
     private string ObtenerExpresionManual_SoloCuerpoClase(SyntaxNode nodo)
     {
         var resultado = new List<string>();
@@ -163,7 +200,7 @@ public class Asignacion
 
     private List<string> ObtenerExpresionManualPorTipo(SyntaxNode hijo)
     {
-        ConsolaVirtual.Escribir($"→ Analizando nodo tipo: {hijo.Kind()}");
+        //ConsolaVirtual.Escribir($"→ Analizando nodo tipo: {hijo.Kind()}");
         var resultado = new List<string>();
 
         switch (hijo)
@@ -309,7 +346,7 @@ public class Asignacion
                 }
 
                 break;
-            
+
             case WhileStatementSyntax whileStmt:
                 ConsolaVirtual.Escribir($"[{whileStmt.Condition}] Detectado: while - comparación ␦ valor: {valoresOperacion["while_comparacion"]}");
                 resultado.Add(valoresOperacion["while_comparacion"]);
@@ -364,15 +401,21 @@ public class Asignacion
                     resultado.Add("1");
                 }
                 break;
+
             case IfStatementSyntax ifStmt:
                 ConsolaVirtual.Escribir("→ Inicia if");
-                ProcesarExpresion(ifStmt.Condition, resultado);  // Procesa condición del if
 
+                List<string> caminosCondicionales = new();
+
+                // Procesa if principal
+                ProcesarExpresion(ifStmt.Condition, resultado);  // condición común
                 string cuerpoIf = ObtenerExpresionManual(ifStmt.Statement);
                 if (!string.IsNullOrWhiteSpace(cuerpoIf))
-                    resultado.Add($"({cuerpoIf})");
-                ConsolaVirtual.Escribir("→ Finaliza if");
+                {
+                    caminosCondicionales.Add($"({cuerpoIf})");
+                }
 
+                // Procesa else if y else
                 var elseNodo = ifStmt.Else;
 
                 while (elseNodo != null)
@@ -380,11 +423,12 @@ public class Asignacion
                     if (elseNodo.Statement is IfStatementSyntax elseIfStmt)
                     {
                         ConsolaVirtual.Escribir("→ Inicia else if");
-                        ProcesarExpresion(elseIfStmt.Condition, resultado);  // Procesa condición del else if
+                        ProcesarExpresion(elseIfStmt.Condition, resultado);
 
                         string cuerpoElseIf = ObtenerExpresionManual(elseIfStmt.Statement);
                         if (!string.IsNullOrWhiteSpace(cuerpoElseIf))
-                            resultado.Add($"({cuerpoElseIf})");
+                            caminosCondicionales.Add($"({cuerpoElseIf})");
+
                         ConsolaVirtual.Escribir("→ Finaliza else if");
 
                         elseNodo = elseIfStmt.Else;
@@ -395,16 +439,42 @@ public class Asignacion
 
                         string cuerpoElse = ObtenerExpresionManual(elseNodo.Statement);
                         if (!string.IsNullOrWhiteSpace(cuerpoElse))
-                            resultado.Add($"({cuerpoElse})");
-                        ConsolaVirtual.Escribir("→ Finaliza else");
+                            caminosCondicionales.Add($"({cuerpoElse})");
 
+                        ConsolaVirtual.Escribir("→ Finaliza else");
                         break;
                     }
                 }
+
+                // Mostrar y comparar todos los caminos
+                ConsolaVirtual.Escribir("→ Evaluando caminos posibles de if/else:");
+                List<(string expr, int peso)> caminosEvaluados = new();
+                foreach (var camino in caminosCondicionales)
+                {
+                    string simplificado = ResolverFormula(camino);
+                    int peso = EvaluarComplejidad(simplificado);
+                    caminosEvaluados.Add((simplificado, peso));
+                    ConsolaVirtual.Escribir($"→ Camino posible: {simplificado}  → peso estimado: {peso}");
+                }
+
+                if (caminosEvaluados.Count > 0)
+                {
+                    var max = caminosEvaluados.MaxBy(x => x.peso);
+                    var min = caminosEvaluados.MinBy(x => x.peso);
+
+                    ConsolaVirtual.Escribir($"→ Cota superior por camino más costoso: {max.expr}");
+                    ConsolaVirtual.Escribir($"→ Cota inferior por camino más barato: {min.expr}");
+
+                    resultado.Add($"({max.expr})");  // Elegimos el camino de mayor peso
+                }
+
+                ConsolaVirtual.Escribir("→ Finaliza if");
                 break;
 
+
+
             case SwitchStatementSyntax switchStmt:
-                ConsolaVirtual.Escribir($"[{switchStmt}] Detectado: switch ␦ valor: {valoresOperacion["switch"]}");
+                ConsolaVirtual.Escribir($"[switch] Detectado: switch ␦ valor: {valoresOperacion["switch"]}");
                 resultado.Add(valoresOperacion["switch"]);
 
                 foreach (var section in switchStmt.Sections)
@@ -418,7 +488,6 @@ public class Asignacion
                         var expresiones = ObtenerExpresionManualPorTipo(statement);
                         foreach (var ex in expresiones)
                         {
-                            ConsolaVirtual.Escribir($"→ Subexpresión dentro de case: {ex}");
                             resultado.Add($"({ex})");
                         }
                     }
@@ -431,11 +500,11 @@ public class Asignacion
                 break;
 
             default:
-                ConsolaVirtual.Escribir($"[{hijo}] Nodo no clasificado directamente, se analiza internamente.");
+                //ConsolaVirtual.Escribir($"[{hijo}] Nodo no clasificado directamente, se analiza internamente.");
                 string sub = ObtenerExpresionManual(hijo);
                 if (!string.IsNullOrWhiteSpace(sub))
                 {
-                    ConsolaVirtual.Escribir($"→ Subexpresión encontrada: {sub}");
+                    //ConsolaVirtual.Escribir($"→ Subexpresión encontrada: {sub}");
                     resultado.Add(sub);
                 }
                 break;
@@ -450,7 +519,7 @@ public class Asignacion
         //  Caso nuevo: paréntesis
         if (expr is ParenthesizedExpressionSyntax parentesis)
         {
-        // Recurse into the inner expression
+            // Recurse into the inner expression
             ProcesarExpresion(parentesis.Expression, resultado);
         }
         else if (expr is ElementAccessExpressionSyntax acceso)
