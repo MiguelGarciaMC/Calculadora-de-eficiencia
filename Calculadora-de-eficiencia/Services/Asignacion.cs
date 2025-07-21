@@ -651,9 +651,22 @@ private static int ObtenerOrdenGrado(string clave)
         ConsolaVirtual.Escribir("\n--- Resolución simbólica y análisis de límite ---");
         ConsolaVirtual.Escribir("Expresión formateada: " + expr);
 
-        Operaciones.AnalizarLimite(expr);
+        try
+        {
+            var parsed = Infix.ParseOrThrow(expr);
+            var expanded = Algebraic.Expand(parsed);
+            string result = Infix.Format(expanded);
 
-        return expr;
+            Operaciones.AnalizarLimite(result);
+
+            return result;
+        }
+        catch
+        {
+            ConsolaVirtual.Escribir("[ERROR] No se pudo expandir la fórmula.");
+            return expr; // fallback
+        }
     }
+
 }
 

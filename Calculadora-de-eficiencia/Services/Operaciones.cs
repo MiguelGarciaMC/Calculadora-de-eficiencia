@@ -151,7 +151,7 @@ namespace Calculadora_de_eficiencia.Services
                 {
                     ConsolaVirtual.Escribir("Cota superior: O(n^2) - Cuadrática");
                 }
-                else if (maxExponent > 1) // Por ejemplo, n^1.5
+                else if (maxExponent > 1)
                 {
                     ConsolaVirtual.Escribir($"Cota superior: O(n^{maxExponent}) - Polinomial (grado intermedio)");
                 }
@@ -159,7 +159,7 @@ namespace Calculadora_de_eficiencia.Services
                 {
                     ConsolaVirtual.Escribir("Cota superior: O(n) - Lineal");
                 }
-                else // Exponente menor o igual a 0, o entre 0 y 1 (ej. sqrt(n))
+                else // Exponente menor o igual a 0, o entre 0 y 1
                 {
                     ConsolaVirtual.Escribir("Cota superior: O(1) - Constante (sublineal o constante)");
                 }
