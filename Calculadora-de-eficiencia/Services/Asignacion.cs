@@ -22,7 +22,9 @@ public class Asignacion
         { "comparacion", "1" },
         { "while_comparacion", "n + 1" },
         { "dowhile_comparacion", "n + 1" },
-        { "acceso_arreglo", "1" }
+        { "acceso_arreglo", "1" },
+        { "switch", "1" },
+        { "case", "1" }
     };
 
     public void Recorrer(SyntaxNode nodo)
@@ -290,6 +292,24 @@ public class Asignacion
                 }
                 break;
 
+            case SwitchStatementSyntax switchStmt:
+                ConsolaVirtual.Escribir($"[{switchStmt}] Detectado: switch ␦ valor: { valoresOperacion["switch"]}");
+                resultado.Add(valoresOperacion["switch"]);
+
+                foreach (var section in switchStmt.Sections)
+                {
+                    //Contar cada sección (case/default) como una unidad
+                    ConsolaVirtual.Escribir($" → Detectado: case/default ␦ valor: { valoresOperacion["case"]}");
+
+                    //Analizar instrucciones dentro del case
+                    foreach (var statement in section.Statements)
+                    {
+                        string subExpresion = ObtenerExpresionManual(statement);
+                        if (!string.IsNullOrWhiteSpace(subExpresion))
+                            resultado.Add($"({subExpresion}");
+                    }
+                }
+                break;
 
             default:
                 string sub = ObtenerExpresionManual(hijo);
@@ -303,7 +323,7 @@ public class Asignacion
 
     private void ProcesarExpresion(ExpressionSyntax expr, List<string> resultado, bool omitirComparaciones = false)
     {
-        // ⚠️ Caso nuevo: paréntesis
+        // Caso nuevo: paréntesis
         if (expr is ParenthesizedExpressionSyntax parentesis)
         {
             // Recurse into the inner expression
@@ -366,6 +386,13 @@ public class Asignacion
     public void ResolverFormula(string expresion)
     {
         ConsolaVirtual.Escribir("\n--- Resolución simbólica (con MathNet.Symbolics) ---");
+
+        //Detección para operaciones vacias
+        if (string.IsNullOrWhiteSpace(expresion))
+        {
+            ConsolaVirtual.Escribir("T(n) vacía no hay operaciones detectadas.");
+            return;
+        }
 
         string expr = expresion.Replace("]", ")")
                                .Replace("[", "(")
