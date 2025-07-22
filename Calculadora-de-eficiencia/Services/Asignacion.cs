@@ -61,7 +61,7 @@ public class Asignacion
                 int totalOperacionesClase = resultadoClase.Split('+').Select(x => x.Trim()).Count(x => !string.IsNullOrEmpty(x));
                 ConsolaVirtual.Escribir($"Total de operaciones detectadas en la clase: {totalOperacionesClase}");
 
-                string simplificadaClase = ResolverFormula(resultadoClase);
+                string simplificadaClase = ObtenerCotaSuperior(resultadoClase);
                 expresionesSimplificadas.Add(simplificadaClase);
             }
 
@@ -86,21 +86,21 @@ public class Asignacion
                 int totalOperacionesMetodo = resultadoMetodo.Split('+').Select(x => x.Trim()).Count(x => !string.IsNullOrEmpty(x));
                 ConsolaVirtual.Escribir($"Total de operaciones detectadas en el método: {totalOperacionesMetodo}");
 
-                string simplificadaMetodo = ResolverFormula(resultadoMetodo);
+                string simplificadaMetodo = ObtenerCotaSuperior(resultadoMetodo);
                 expresionesSimplificadas.Add(simplificadaMetodo);
             }
         }
 
-        ConsolaVirtual.Escribir("\n\ntotal DE T(n) simplificada");
+        ConsolaVirtual.Escribir("\n\nTotal de operaciones para la cota superior T(n) simplificadas");
         foreach (var expr in expresionesSimplificadas)
         {
             ConsolaVirtual.Escribir("T(n) simplificada ~ " + expr);
         }
 
         // --- Suma total formal ---
-        int totalConstante = 0;
-        int totalLineal = 0;
-        int totalCuadratica = 0;
+        var sumaPorExponente = new Dictionary<int, int>(); // clave: exponente, valor: coeficiente
+        int constantes = 0;
+
 
         foreach (var expr in expresionesSimplificadas)
         {
@@ -108,30 +108,53 @@ public class Asignacion
 
             foreach (var parte in partes)
             {
-                if (parte == "n")
-                    totalLineal += 1;
-                else if (parte == "n^2")
-                    totalCuadratica += 1;
-                else if (parte.EndsWith("*n^2"))
+                if (parte.Contains("n"))
                 {
-                    int coef = int.Parse(parte.Replace("*n^2", ""));
-                    totalCuadratica += coef;
-                }
-                else if (parte.EndsWith("*n"))
-                {
-                    int coef = int.Parse(parte.Replace("*n", ""));
-                    totalLineal += coef;
+                    if (parte.Contains("^"))
+                    {
+                        var partesExp = parte.Split("*n^");
+                        int coef = partesExp.Length == 2 ? int.Parse(partesExp[0]) : 1;
+                        int exponente = int.Parse(partesExp[1]);
+
+                        if (!sumaPorExponente.ContainsKey(exponente))
+                            sumaPorExponente[exponente] = 0;
+
+                        sumaPorExponente[exponente] += coef;
+                    }
+                    else if (parte.Contains("*n"))
+                    {
+                        var coef = int.Parse(parte.Replace("*n", ""));
+                        if (!sumaPorExponente.ContainsKey(1))
+                            sumaPorExponente[1] = 0;
+
+                        sumaPorExponente[1] += coef;
+                    }
+                    else if (parte == "n")
+                    {
+                        if (!sumaPorExponente.ContainsKey(1))
+                            sumaPorExponente[1] = 0;
+
+                        sumaPorExponente[1] += 1;
+                    }
                 }
                 else
                 {
                     if (int.TryParse(parte, out int constante))
-                        totalConstante += constante;
+                        constantes += constante;
                 }
             }
         }
 
         ConsolaVirtual.Escribir("\nSuma");
-        ConsolaVirtual.Escribir($"T(n) simplificada total= {totalConstante} + {totalLineal}*n + {totalCuadratica}*n^2");
+        string total = constantes.ToString();
+
+        foreach (var kvp in sumaPorExponente.OrderBy(k => k.Key))
+        {
+            total += $" + {kvp.Value}*n^{kvp.Key}";
+        }
+
+        ConsolaVirtual.Escribir($"T(n) Cota superior simplificada = {total}");
+
     }
 
     private int EvaluarComplejidad(string formula)
@@ -405,13 +428,14 @@ public class Asignacion
             case IfStatementSyntax ifStmt:
                 ConsolaVirtual.Escribir("→ Inicia if");
 
+                var tnIndividuales = new List<(string tipo, string formula, int valor)>(); // Ej: ("if", 4)
                 var resultadoIf = new List<string>();
                 var condicionesPrevias = new List<string>(); // Guardará condiciones para else if y else
 
                 // Procesar condición del if
-                ProcesarExpresion(ifStmt.Condition, resultadoIf);
                 var condIf = new List<string>();
                 ProcesarExpresion(ifStmt.Condition, condIf);
+                resultadoIf.AddRange(condIf);         // Se usa en el resultado global
                 condicionesPrevias.AddRange(condIf);
 
                 // Procesar cuerpo del if
@@ -425,9 +449,9 @@ public class Asignacion
                 string tIfSimplificada = ResolverFormulaSilenciosa(expresionIf);
                 ConsolaVirtual.Escribir($"**_T(n) del if = {expresionIf}_**");
                 ConsolaVirtual.Escribir($"**_T(n) del if simplificada ~ {tIfSimplificada}_**");
+                tnIndividuales.Add(("if", tIfSimplificada, EvaluarComplejidad(tIfSimplificada)));
 
-                // Agregar solo el cuerpo y condición de este if al resultado global
-                resultado.AddRange(resultadoIf);
+
 
                 var elseNodo = ifStmt.Else;
 
@@ -441,10 +465,9 @@ public class Asignacion
                         var condicionesSoloParaImpresion = new List<string>(condicionesPrevias); // Clon
 
                         // Procesar condición actual del else if
-                        ProcesarExpresion(elseIfStmt.Condition, resultadoElseIf);
-                        var condicionElseIfTexto = ObtenerExpresionManual(elseIfStmt.Condition);
                         var condElseIf = new List<string>();
                         ProcesarExpresion(elseIfStmt.Condition, condElseIf);
+                        resultadoElseIf.AddRange(condElseIf);
                         condicionesPrevias.AddRange(condElseIf);
 
 
@@ -464,9 +487,8 @@ public class Asignacion
                         string tElseIfSimplificada = ResolverFormulaSilenciosa(expresionElseIf);
                         ConsolaVirtual.Escribir($"**_T(n) del else if = {expresionElseIf}_**");
                         ConsolaVirtual.Escribir($"**_T(n) del else if simplificada ~ {tElseIfSimplificada}_**");
+                        tnIndividuales.Add(("else if", tElseIfSimplificada, EvaluarComplejidad(tElseIfSimplificada)));
 
-                        // Agregar solo condición actual + cuerpo al resultado global
-                        resultado.AddRange(resultadoElseIf);
 
                         elseNodo = elseIfStmt.Else;
                     }
@@ -493,14 +515,28 @@ public class Asignacion
                         string tElseSimplificada = ResolverFormulaSilenciosa(expresionElse);
                         ConsolaVirtual.Escribir($"**_T(n) del else = {expresionElse}_**");
                         ConsolaVirtual.Escribir($"**_T(n) del else simplificada ~ {tElseSimplificada}_**");
+                        tnIndividuales.Add(("else", tElseSimplificada, EvaluarComplejidad(tElseSimplificada)));
 
-                        // Agregar solo cuerpo al resultado global
-                        resultado.AddRange(resultadoElse);
+                        if (tnIndividuales.Any())
+                        {
+                            var mayor = tnIndividuales.MaxBy(t => t.valor);
+                            var menor = tnIndividuales.MinBy(t => t.valor);
 
+                            ConsolaVirtual.Escribir("");
+                            ConsolaVirtual.Escribir("--- Comparación de T(n) individuales ---");
+                            ConsolaVirtual.Escribir($"🟥 Cota superior → bloque **{mayor.tipo}** con T(n) = {mayor.formula}");
+                            ConsolaVirtual.Escribir($"🟩 Cota inferior → bloque **{menor.tipo}** con T(n) = {menor.formula}");
+                            resultado.Add(mayor.formula);
+
+                        }
                         break;
                     }
+
                 }
                 break;
+
+
+
 
 
             default:
@@ -579,10 +615,8 @@ public class Asignacion
         // Si quieres extender más tipos de expresiones, puedes seguir con otros `else if`
     }
 
-    public string ResolverFormula(string expresion, bool imprimirDetalles = true)
+    public string ObtenerCotaSuperior(string expresion, bool imprimirDetalles = true)
     {
-        ConsolaVirtual.Escribir("\n--- Resolución simbólica (con MathNet.Symbolics) ---");
-
         //Detección para operaciones vacias
         if (string.IsNullOrWhiteSpace(expresion))
         {
@@ -609,16 +643,10 @@ public class Asignacion
 
             if (imprimirDetalles)
             {
+                // Ya no imprimimos las cotas aquí, solo mostramos la fórmula simplificada.
                 ConsolaVirtual.Escribir("T(n) simplificada ~ " + resultado);
-
-                ConsolaVirtual.Escribir("\n--- Análisis de cotas ---");
-                if (resultado.Contains("n^2"))
-                    ConsolaVirtual.Escribir("Cota superior: O(n^2)\nCota promedio: aproximadamente cuadrática\nCota inferior: O(1)");
-                else if (resultado.Contains("n"))
-                    ConsolaVirtual.Escribir("Cota superior: O(n)\nCota promedio: aproximadamente lineal\nCota inferior: O(1)");
-                else
-                    ConsolaVirtual.Escribir("Cota superior: O(1)\nCota promedio: constante\nCota inferior: O(1)");
             }
+
 
             return resultado;
         }
