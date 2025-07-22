@@ -115,6 +115,7 @@
             // 
             // richTextBox1
             // 
+            richTextBox1.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             richTextBox1.Location = new Point(32, 107);
             richTextBox1.Name = "richTextBox1";
             richTextBox1.Size = new Size(266, 309);
