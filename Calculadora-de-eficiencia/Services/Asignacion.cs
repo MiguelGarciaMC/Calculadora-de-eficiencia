@@ -119,7 +119,7 @@ public class Asignacion : CSharpSyntaxWalker
         if (node.Modifiers.Any(mod => mod.IsKind(SyntaxKind.PublicKeyword)) || node.Parent is CompilationUnitSyntax)
         {
             ConsolaVirtual.Escribir($"\n--- MÉTODO DETECTADO: {node.Identifier.Text} ---");
-            currentBlockExpressions.Push(new List<string>()); // Nuevo contexto para el método
+            currentBlockExpressions.Push(new List<string>());
 
             if (node.Body == null)
             {
@@ -273,7 +273,7 @@ public class Asignacion : CSharpSyntaxWalker
         currentBlockExpressions.Peek().Add(valoresOperacion["foreach"]); // Representa el costo base del foreach (N iteraciones)
 
         ConsolaVirtual.Escribir("→ Inicia foreach cuerpo");
-        currentBlockExpressions.Push(new List<string>()); // Nuevo contexto para el cuerpo del loop
+        currentBlockExpressions.Push(new List<string>());
         Visit(node.Statement); // Visitar el cuerpo del foreach
         string cuerpoForeach = string.Join(" + ", currentBlockExpressions.Pop());
         ConsolaVirtual.Escribir("→ Finaliza foreach cuerpo");
@@ -290,7 +290,7 @@ public class Asignacion : CSharpSyntaxWalker
         ConsolaVirtual.Escribir("→ Inicia try");
         currentBlockExpressions.Peek().Add("1"); // La entrada al try
 
-        currentBlockExpressions.Push(new List<string>()); // Nuevo contexto para el bloque try
+        currentBlockExpressions.Push(new List<string>());
         Visit(node.Block);
         string cuerpoTry = string.Join(" + ", currentBlockExpressions.Pop());
         if (!string.IsNullOrWhiteSpace(cuerpoTry)) currentBlockExpressions.Peek().Add($"({cuerpoTry})");
@@ -301,7 +301,7 @@ public class Asignacion : CSharpSyntaxWalker
             ConsolaVirtual.Escribir("→ Inicia catch");
             currentBlockExpressions.Peek().Add("1"); // La entrada al catch
 
-            currentBlockExpressions.Push(new List<string>()); // Nuevo contexto para el bloque catch
+            currentBlockExpressions.Push(new List<string>());
             Visit(catchClause.Block);
             string cuerpoCatch = string.Join(" + ", currentBlockExpressions.Pop());
             if (!string.IsNullOrWhiteSpace(cuerpoCatch)) currentBlockExpressions.Peek().Add($"({cuerpoCatch})");
@@ -313,7 +313,7 @@ public class Asignacion : CSharpSyntaxWalker
             ConsolaVirtual.Escribir("→ Inicia finally");
             currentBlockExpressions.Peek().Add("1"); // La entrada al finally
 
-            currentBlockExpressions.Push(new List<string>()); // Nuevo contexto para el bloque finally
+            currentBlockExpressions.Push(new List<string>());
             Visit(node.Finally.Block);
             string cuerpoFinally = string.Join(" + ", currentBlockExpressions.Pop());
             if (!string.IsNullOrWhiteSpace(cuerpoFinally)) currentBlockExpressions.Peek().Add($"({cuerpoFinally})");
@@ -328,7 +328,7 @@ public class Asignacion : CSharpSyntaxWalker
         ProcesarExpresion(node.Condition, omitirComparaciones: true);
 
         ConsolaVirtual.Escribir("→ Inicia while cuerpo");
-        currentBlockExpressions.Push(new List<string>()); // Nuevo contexto para el cuerpo del loop
+        currentBlockExpressions.Push(new List<string>());
         Visit(node.Statement); // Visitar el cuerpo del while
         string cuerpoWhile = string.Join(" + ", currentBlockExpressions.Pop());
         ConsolaVirtual.Escribir("→ Finaliza while cuerpo");
@@ -346,7 +346,7 @@ public class Asignacion : CSharpSyntaxWalker
         ProcesarExpresion(node.Condition, omitirComparaciones: true);
 
         ConsolaVirtual.Escribir("→ Inicia do-while cuerpo");
-        currentBlockExpressions.Push(new List<string>()); // Nuevo contexto para el cuerpo del loop
+        currentBlockExpressions.Push(new List<string>());
         Visit(node.Statement); // Visitar el cuerpo del do-while
         string cuerpoDoWhile = string.Join(" + ", currentBlockExpressions.Pop());
         ConsolaVirtual.Escribir("→ Finaliza do-while cuerpo");
@@ -371,11 +371,6 @@ public class Asignacion : CSharpSyntaxWalker
         }
         else if (node.Expression is AssignmentExpressionSyntax exprAssign)
         {
-            // Ya manejado por VisitAssignmentExpression, pero si se llama desde aquí, se procesa
-            // Asegúrate de que no se dupliquen si VisitAssignmentExpression ya es llamado
-            // ConsolaVirtual.Escribir($"[{exprAssign}] Detectado: asignación (expresión) ␦ valor: {valoresOperacion["asignacion"]}");
-            // currentBlockExpressions.Peek().Add(valoresOperacion["asignacion"]);
-            // ProcesarExpresion(exprAssign.Right);
             base.VisitExpressionStatement(node); // Deja que el walker maneje la asignación por su cuenta
         }
         else if (node.Expression is PostfixUnaryExpressionSyntax postUnary &&
@@ -408,7 +403,7 @@ public class Asignacion : CSharpSyntaxWalker
         List<string> branchExpressions = new(); // Para acumular expresiones de cada rama
 
         // Recorrer el cuerpo del IF
-        currentBlockExpressions.Push(new List<string>()); // Nuevo contexto para el cuerpo del IF
+        currentBlockExpressions.Push(new List<string>());
         Visit(node.Statement);
         string ifBody = string.Join(" + ", currentBlockExpressions.Pop());
         if (!string.IsNullOrWhiteSpace(ifBody)) branchExpressions.Add($"({ifBody})");
@@ -422,7 +417,7 @@ public class Asignacion : CSharpSyntaxWalker
                 ConsolaVirtual.Escribir("→ Inicia else if");
                 ProcesarExpresion(elseIfStmt.Condition); // Costo de la condición del else-if
 
-                currentBlockExpressions.Push(new List<string>()); // Nuevo contexto para el cuerpo del ELSE-IF
+                currentBlockExpressions.Push(new List<string>());
                 Visit(elseIfStmt.Statement);
                 string elseIfBody = string.Join(" + ", currentBlockExpressions.Pop());
                 if (!string.IsNullOrWhiteSpace(elseIfBody)) branchExpressions.Add($"({elseIfBody})");
@@ -433,7 +428,7 @@ public class Asignacion : CSharpSyntaxWalker
             else
             {
                 ConsolaVirtual.Escribir("→ Inicia else");
-                currentBlockExpressions.Push(new List<string>()); // Nuevo contexto para el cuerpo del ELSE
+                currentBlockExpressions.Push(new List<string>());
                 Visit(elseNode.Statement);
                 string elseBody = string.Join(" + ", currentBlockExpressions.Pop());
                 if (!string.IsNullOrWhiteSpace(elseBody)) branchExpressions.Add($"({elseBody})");
@@ -479,7 +474,7 @@ public class Asignacion : CSharpSyntaxWalker
             ConsolaVirtual.Escribir("→ Inicia case");
             currentBlockExpressions.Peek().Add(valoresOperacion["case"]); // Costo de la evaluación del caso
 
-            currentBlockExpressions.Push(new List<string>()); // Nuevo contexto para el cuerpo del caso
+            currentBlockExpressions.Push(new List<string>());
             foreach (var statement in section.Statements)
             {
                 Visit(statement); // Visitar las sentencias dentro del caso
