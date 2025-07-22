@@ -404,12 +404,30 @@ public class Asignacion
 
             case IfStatementSyntax ifStmt:
                 ConsolaVirtual.Escribir("→ Inicia if");
-                ProcesarExpresion(ifStmt.Condition, resultado);  // Procesa condición del if
 
+                var resultadoIf = new List<string>();
+                var condicionesPrevias = new List<string>(); // Guardará condiciones para else if y else
+
+                // Procesar condición del if
+                ProcesarExpresion(ifStmt.Condition, resultadoIf);
+                var condIf = new List<string>();
+                ProcesarExpresion(ifStmt.Condition, condIf);
+                condicionesPrevias.AddRange(condIf);
+
+                // Procesar cuerpo del if
                 string cuerpoIf = ObtenerExpresionManual(ifStmt.Statement);
                 if (!string.IsNullOrWhiteSpace(cuerpoIf))
-                    resultado.Add($"({cuerpoIf})");
+                    resultadoIf.Add($"({cuerpoIf})");
+
                 ConsolaVirtual.Escribir("→ Finaliza if");
+
+                string expresionIf = string.Join(" + ", resultadoIf);
+                string tIfSimplificada = ResolverFormulaSilenciosa(expresionIf);
+                ConsolaVirtual.Escribir($"**_T(n) del if = {expresionIf}_**");
+                ConsolaVirtual.Escribir($"**_T(n) del if simplificada ~ {tIfSimplificada}_**");
+
+                // Agregar solo el cuerpo y condición de este if al resultado global
+                resultado.AddRange(resultadoIf);
 
                 var elseNodo = ifStmt.Else;
 
@@ -418,12 +436,37 @@ public class Asignacion
                     if (elseNodo.Statement is IfStatementSyntax elseIfStmt)
                     {
                         ConsolaVirtual.Escribir("→ Inicia else if");
-                        ProcesarExpresion(elseIfStmt.Condition, resultado);  // Procesa condición del else if
 
+                        var resultadoElseIf = new List<string>();
+                        var condicionesSoloParaImpresion = new List<string>(condicionesPrevias); // Clon
+
+                        // Procesar condición actual del else if
+                        ProcesarExpresion(elseIfStmt.Condition, resultadoElseIf);
+                        var condicionElseIfTexto = ObtenerExpresionManual(elseIfStmt.Condition);
+                        var condElseIf = new List<string>();
+                        ProcesarExpresion(elseIfStmt.Condition, condElseIf);
+                        condicionesPrevias.AddRange(condElseIf);
+
+
+                        // Procesar cuerpo del else if
                         string cuerpoElseIf = ObtenerExpresionManual(elseIfStmt.Statement);
                         if (!string.IsNullOrWhiteSpace(cuerpoElseIf))
-                            resultado.Add($"({cuerpoElseIf})");
+                            resultadoElseIf.Add($"({cuerpoElseIf})");
+
                         ConsolaVirtual.Escribir("→ Finaliza else if");
+
+                        // Fórmula individual = condiciones previas + condición actual + cuerpo
+                        var resultadoTotalImpresion = new List<string>();
+                        resultadoTotalImpresion.AddRange(condicionesSoloParaImpresion);
+                        resultadoTotalImpresion.AddRange(resultadoElseIf);
+
+                        string expresionElseIf = string.Join(" + ", resultadoTotalImpresion);
+                        string tElseIfSimplificada = ResolverFormulaSilenciosa(expresionElseIf);
+                        ConsolaVirtual.Escribir($"**_T(n) del else if = {expresionElseIf}_**");
+                        ConsolaVirtual.Escribir($"**_T(n) del else if simplificada ~ {tElseIfSimplificada}_**");
+
+                        // Agregar solo condición actual + cuerpo al resultado global
+                        resultado.AddRange(resultadoElseIf);
 
                         elseNodo = elseIfStmt.Else;
                     }
@@ -431,44 +474,34 @@ public class Asignacion
                     {
                         ConsolaVirtual.Escribir("→ Inicia else");
 
+                        var resultadoElse = new List<string>();
+                        var condicionesSoloParaImpresion = new List<string>(condicionesPrevias); // Clon
+
+                        // Procesar cuerpo del else
                         string cuerpoElse = ObtenerExpresionManual(elseNodo.Statement);
                         if (!string.IsNullOrWhiteSpace(cuerpoElse))
-                            resultado.Add($"({cuerpoElse})");
+                            resultadoElse.Add($"({cuerpoElse})");
+
                         ConsolaVirtual.Escribir("→ Finaliza else");
+
+                        // Fórmula individual = condiciones previas + cuerpo
+                        var resultadoTotalImpresion = new List<string>();
+                        resultadoTotalImpresion.AddRange(condicionesSoloParaImpresion);
+                        resultadoTotalImpresion.AddRange(resultadoElse);
+
+                        string expresionElse = string.Join(" + ", resultadoTotalImpresion);
+                        string tElseSimplificada = ResolverFormulaSilenciosa(expresionElse);
+                        ConsolaVirtual.Escribir($"**_T(n) del else = {expresionElse}_**");
+                        ConsolaVirtual.Escribir($"**_T(n) del else simplificada ~ {tElseSimplificada}_**");
+
+                        // Agregar solo cuerpo al resultado global
+                        resultado.AddRange(resultadoElse);
 
                         break;
                     }
                 }
                 break;
 
-
-
-
-            case SwitchStatementSyntax switchStmt:
-                ConsolaVirtual.Escribir($"[switch] Detectado: switch ␦ valor: {valoresOperacion["switch"]}");
-                resultado.Add(valoresOperacion["switch"]);
-
-                foreach (var section in switchStmt.Sections)
-                {
-                    ConsolaVirtual.Escribir("→ Inicia case");
-                    ConsolaVirtual.Escribir($"→ Detectado: case ␦ valor: {valoresOperacion["case"]}");
-                    resultado.Add(valoresOperacion["case"]);
-
-                    foreach (var statement in section.Statements)
-                    {
-                        var expresiones = ObtenerExpresionManualPorTipo(statement);
-                        foreach (var ex in expresiones)
-                        {
-                            resultado.Add($"({ex})");
-                        }
-                    }
-
-
-                    ConsolaVirtual.Escribir("→ Finaliza case");
-                }
-
-
-                break;
 
             default:
                 //ConsolaVirtual.Escribir($"[{hijo}] Nodo no clasificado directamente, se analiza internamente.");
@@ -546,14 +579,15 @@ public class Asignacion
         // Si quieres extender más tipos de expresiones, puedes seguir con otros `else if`
     }
 
-    public string ResolverFormula(string expresion)
+    public string ResolverFormula(string expresion, bool imprimirDetalles = true)
     {
         ConsolaVirtual.Escribir("\n--- Resolución simbólica (con MathNet.Symbolics) ---");
 
         //Detección para operaciones vacias
         if (string.IsNullOrWhiteSpace(expresion))
         {
-            ConsolaVirtual.Escribir("T(n) vacía no hay operaciones detectadas.");
+            if (imprimirDetalles)
+                ConsolaVirtual.Escribir("T(n) vacía no hay operaciones detectadas.");
             return "0";
         }
 
@@ -561,7 +595,11 @@ public class Asignacion
                                .Replace("[", "(")
                                .Replace("n(", "n*(");
 
-        ConsolaVirtual.Escribir("Expandida: " + expr);
+        if (imprimirDetalles)
+        {
+            ConsolaVirtual.Escribir("\n--- Resolución simbólica (con MathNet.Symbolics) ---");
+            ConsolaVirtual.Escribir("Expandida: " + expr);
+        }
 
         try
         {
@@ -569,23 +607,49 @@ public class Asignacion
             var simplificada = Algebraic.Expand(parsed);
             string resultado = Infix.Format(simplificada);
 
-            ConsolaVirtual.Escribir("T(n) simplificada ~ " + resultado);
+            if (imprimirDetalles)
+            {
+                ConsolaVirtual.Escribir("T(n) simplificada ~ " + resultado);
 
-            ConsolaVirtual.Escribir("\n--- Análisis de cotas ---");
-            if (resultado.Contains("n^2"))
-                ConsolaVirtual.Escribir("Cota superior: O(n^2)\nCota promedio: aproximadamente cuadrática\nCota inferior: O(1)");
-            else if (resultado.Contains("n"))
-                ConsolaVirtual.Escribir("Cota superior: O(n)\nCota promedio: aproximadamente lineal\nCota inferior: O(1)");
-            else
-                ConsolaVirtual.Escribir("Cota superior: O(1)\nCota promedio: constante\nCota inferior: O(1)");
+                ConsolaVirtual.Escribir("\n--- Análisis de cotas ---");
+                if (resultado.Contains("n^2"))
+                    ConsolaVirtual.Escribir("Cota superior: O(n^2)\nCota promedio: aproximadamente cuadrática\nCota inferior: O(1)");
+                else if (resultado.Contains("n"))
+                    ConsolaVirtual.Escribir("Cota superior: O(n)\nCota promedio: aproximadamente lineal\nCota inferior: O(1)");
+                else
+                    ConsolaVirtual.Escribir("Cota superior: O(1)\nCota promedio: constante\nCota inferior: O(1)");
+            }
 
             return resultado;
         }
         catch (Exception ex)
         {
-            ConsolaVirtual.Escribir(" Error al resolver la expresión: " + ex.Message);
+            if (imprimirDetalles)
+                ConsolaVirtual.Escribir(" Error al resolver la expresión: " + ex.Message);
             return "Error";
         }
     }
+
+    private string ResolverFormulaSilenciosa(string expresion)
+    {
+        if (string.IsNullOrWhiteSpace(expresion))
+            return "0";
+
+        string expr = expresion.Replace("]", ")")
+                               .Replace("[", "(")
+                               .Replace("n(", "n*(");
+
+        try
+        {
+            var parsed = Infix.ParseOrThrow(expr);
+            var simplificada = Algebraic.Expand(parsed);
+            return Infix.Format(simplificada);
+        }
+        catch
+        {
+            return "Error";
+        }
+    }
+
 }
 
