@@ -69,12 +69,12 @@ public class Asignacion
                 .OfType<MethodDeclarationSyntax>()
                 .ToList();
 
-            if (metodos.Count == 0)
+            if (metodosPublicos.Count == 0)
             {
                 ConsolaVirtual.Escribir($"[INFO] La clase {clase.Identifier.Text} no contiene métodos públicos.");
             }
 
-            foreach (var metodo in metodos)
+            foreach (var metodo in metodosPublicos)
             {
                 ConsolaVirtual.Escribir($"\n--- MÉTODO DETECTADO: {metodo.Identifier.Text} en {clase.Identifier.Text} ---");
 
@@ -608,15 +608,10 @@ public class Asignacion
                                .Replace("[", "(")
                                .Replace("n(", "n*(");
         ConsolaVirtual.Escribir("Expandida: " + expr);
-        if (string.IsNullOrWhiteSpace(expr))
-        {
-            ConsolaVirtual.Escribir("No hay operaciones para analizar en esta sección.\n");
-            return;
-        }
         if (expr.Contains("T("))
         {
             ConsolaVirtual.Escribir("Expresión recursiva detectada. No se resolverá con MathNet.\n");
-            return;
+            return "0";
         }
 
         try
