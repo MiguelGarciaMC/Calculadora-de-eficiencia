@@ -41,6 +41,8 @@ public class Asignacion
         }
 
         var expresionesSimplificadas = new List<string>();
+        var expresionesSimplificadas_Alterno = new List<string>(); // Agregado para segunda impresión
+
 
         foreach (var clase in clases)
         {
@@ -82,12 +84,18 @@ public class Asignacion
                 string resultadoMetodo = ObtenerExpresionManual(metodo);
 
                 ConsolaVirtual.Escribir($"T(n) = {resultadoMetodo}");
-
+                // Primera impresión
                 int totalOperacionesMetodo = resultadoMetodo.Split('+').Select(x => x.Trim()).Count(x => !string.IsNullOrEmpty(x));
                 ConsolaVirtual.Escribir($"Total de operaciones detectadas en el método: {totalOperacionesMetodo}");
 
                 string simplificadaMetodo = ResolverFormula(resultadoMetodo);
                 expresionesSimplificadas.Add(simplificadaMetodo);
+
+                // Guardamos el resultado para la segunda impresión
+                expresionesSimplificadas_Alterno.Add(resultadoMetodo);
+                ConsolaVirtual.Escribir("\nOperación dos");
+                ConsolaVirtual.Escribir($"T(n) = {resultadoMetodo}");
+                ConsolaVirtual.Escribir($"Total de operaciones detectadas en el método: {totalOperacionesMetodo}");
             }
         }
 
@@ -443,16 +451,15 @@ public class Asignacion
 
 
 
-
             case SwitchStatementSyntax switchStmt:
                 ConsolaVirtual.Escribir($"[switch] Detectado: switch ␦ valor: {valoresOperacion["switch"]}");
                 resultado.Add(valoresOperacion["switch"]);
 
-    foreach (var section in switchStmt.Sections)
-    {
-        ConsolaVirtual.Escribir("→ Inicia case");
-        ConsolaVirtual.Escribir($"→ Detectado: case ␦ valor: {valoresOperacion["case"]}");
-        resultado.Add(valoresOperacion["case"]);
+                foreach (var section in switchStmt.Sections)
+                {
+                    ConsolaVirtual.Escribir("→ Inicia case");
+                    ConsolaVirtual.Escribir($"→ Detectado: case ␦ valor: {valoresOperacion["case"]}");
+                    resultado.Add(valoresOperacion["case"]);
 
                     foreach (var statement in section.Statements)
                     {
@@ -463,10 +470,10 @@ public class Asignacion
                         }
                     }
 
-        ConsolaVirtual.Escribir("→ Finaliza case");
-    }
+                    ConsolaVirtual.Escribir("→ Finaliza case");
+                }
 
-    break;
+                break;
 
 
             default:
@@ -542,7 +549,7 @@ public class Asignacion
                 resultado.Add(valoresOperacion["logica"]);
             }
         }
-        // Si quieres extender más tipos de expresiones, puedes seguir con otros `else if`
+        // Si quieres extender más tipos de expresiones, puedes seguir con otros else if
     }
 
     public string ResolverFormula(string expresion)
@@ -587,4 +594,3 @@ public class Asignacion
         }
     }
 }
-
