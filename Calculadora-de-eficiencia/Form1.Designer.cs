@@ -115,9 +115,9 @@
             // 
             // richTextBox1
             // 
-            richTextBox1.Location = new Point(32, 118);
+            richTextBox1.Location = new Point(32, 107);
             richTextBox1.Name = "richTextBox1";
-            richTextBox1.Size = new Size(245, 262);
+            richTextBox1.Size = new Size(266, 309);
             richTextBox1.TabIndex = 6;
             richTextBox1.Text = "";
             // 
@@ -144,7 +144,7 @@
             // 
             laber_resultado.AutoSize = true;
             laber_resultado.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            laber_resultado.Location = new Point(118, 94);
+            laber_resultado.Location = new Point(120, 87);
             laber_resultado.Name = "laber_resultado";
             laber_resultado.Size = new Size(75, 17);
             laber_resultado.TabIndex = 3;
@@ -165,7 +165,7 @@
             label_descargarArchivo.AutoEllipsis = true;
             label_descargarArchivo.AutoSize = true;
             label_descargarArchivo.Font = new Font("Segoe UI Semibold", 14.25F, FontStyle.Bold | FontStyle.Italic, GraphicsUnit.Point, 0);
-            label_descargarArchivo.Location = new Point(334, 45);
+            label_descargarArchivo.Location = new Point(314, 45);
             label_descargarArchivo.Name = "label_descargarArchivo";
             label_descargarArchivo.Size = new Size(198, 25);
             label_descargarArchivo.TabIndex = 1;
