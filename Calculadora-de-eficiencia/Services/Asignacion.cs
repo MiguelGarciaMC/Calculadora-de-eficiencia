@@ -31,6 +31,7 @@ public class Asignacion
     public void Recorrer(SyntaxNode nodo)
     {
 
+
         ConsolaVirtual.Escribir("\n--- Análisis separado por clases y métodos públicos ---");
 
         var clases = nodo.DescendantNodes().OfType<ClassDeclarationSyntax>().ToList();
@@ -43,6 +44,7 @@ public class Asignacion
 
         var expresionesSimplificadas = new List<string>();
         var expresionesInferiores = new List<string>();
+        var expresionesPromedios = new List<string>();
 
         foreach (var clase in clases)
         {
@@ -66,6 +68,7 @@ public class Asignacion
                 string simplificadaClase = ObtenerCotaSuperior(resultadoClase);
                 expresionesSimplificadas.Add(simplificadaClase);
                 expresionesInferiores.Add(simplificadaClase);
+                expresionesPromedios.Add(simplificadaClase);
             }
 
             var metodosPublicos = clase.Members
@@ -99,6 +102,12 @@ public class Asignacion
                 ConsolaVirtual.Escribir("Expandida: " + expresionInferior);
                 ConsolaVirtual.Escribir("T(n) simplificada ~ " + simplificadaInferior);
                 expresionesInferiores.Add(simplificadaInferior);
+
+                // Construir la expresión promedio usando las cotas promedio recolectadas
+                string expresionPromedio = ConstruirExpresionPromedio(resultadoMetodo);
+                string simplificadaPromedio = ObtenerCotaSuperior(expresionPromedio, false);
+                expresionesPromedios.Add(simplificadaPromedio);
+
             }
         }
 
@@ -113,12 +122,9 @@ public class Asignacion
         {
             ConsolaVirtual.Escribir("T(n) simplificada ~ " + expr);
         }
-
-        // --- Suma total formal ---
+        // --- Suma total ---
         var sumaPorExponente = new Dictionary<int, int>(); // clave: exponente, valor: coeficiente
         int constantes = 0;
-
-
         foreach (var expr in expresionesSimplificadas)
         {
             var partes = expr.Replace(" ", "").Split('+');
@@ -161,17 +167,13 @@ public class Asignacion
                 }
             }
         }
-
         ConsolaVirtual.Escribir("\nSuma SUPERIOR");
         string total = constantes.ToString();
-
         foreach (var kvp in sumaPorExponente.OrderBy(k => k.Key))
         {
             total += $" + {kvp.Value}*n^{kvp.Key}";
         }
-
         ConsolaVirtual.Escribir($"T(n) Cota superior simplificada = {total}");
-
         // --- Suma total formal INFERIOR ---
         var sumaPorExponenteInf = new Dictionary<int, int>(); // clave: exponente, valor: coeficiente
         int constantesInf = 0;
@@ -218,18 +220,79 @@ public class Asignacion
                 }
             }
         }
-
         ConsolaVirtual.Escribir("\nSuma INFERIOR");
         string totalInf = constantesInf.ToString();
-
         foreach (var kvp in sumaPorExponenteInf.OrderBy(k => k.Key))
         {
             totalInf += $" + {kvp.Value}*n^{kvp.Key}";
         }
-
         ConsolaVirtual.Escribir($"T(n) Cota inferior simplificada = {totalInf}");
 
+        // --- Suma total formal PROMEDIO ---
+        var sumaPorExponenteProm = new Dictionary<int, double>(); // Cambio: usar double en lugar de int
+        double constantesProm = 0; // Cambio: usar double
 
+        foreach (var expr in expresionesPromedios)
+        {
+            ConsolaVirtual.Escribir($"Procesando expresión promedio: {expr}");
+
+            // Manejar fracciones y expresiones complejas
+            var terminos = ParsearExpresionCompleta(expr);
+
+            foreach (var termino in terminos)
+            {
+                if (termino.potencia == 0) // término constante
+                {
+                    constantesProm += termino.coeficiente;
+                }
+                else // término con potencia de n
+                {
+                    if (!sumaPorExponenteProm.ContainsKey(termino.potencia))
+                        sumaPorExponenteProm[termino.potencia] = 0;
+
+                    sumaPorExponenteProm[termino.potencia] += termino.coeficiente;
+                }
+            }
+        }
+
+        ConsolaVirtual.Escribir("\nSuma PROMEDIO");
+
+        // Construir resultado
+        var partesPromedio = new List<string>();
+
+        // Agregar constante si existe
+        if (Math.Abs(constantesProm) > 0.001)
+        {
+            if (Math.Abs(constantesProm - Math.Round(constantesProm)) < 0.001)
+                partesPromedio.Add(Math.Round(constantesProm).ToString());
+            else
+                partesPromedio.Add(constantesProm.ToString("F2"));
+        }
+
+        // Agregar términos con potencias de n
+        foreach (var kvp in sumaPorExponenteProm.OrderBy(k => k.Key))
+        {
+            string coefStr;
+            if (Math.Abs(kvp.Value - Math.Round(kvp.Value)) < 0.001)
+                coefStr = Math.Round(kvp.Value).ToString();
+            else
+                coefStr = kvp.Value.ToString("F2");
+
+            if (kvp.Key == 1)
+                partesPromedio.Add($"{coefStr}*n^{kvp.Key}");
+            else
+                partesPromedio.Add($"{coefStr}*n^{kvp.Key}");
+        }
+
+        string totalProm = partesPromedio.Any() ? string.Join(" + ", partesPromedio) : "0";
+        ConsolaVirtual.Escribir($"T(n) Cota promedio simplificada = {totalProm}");
+        // (REEMPLAZAR HASTA AQUÍ)
+
+        ConsolaVirtual.Escribir("\n\nTotal de operaciones para la cota promedio T(n) simplificadas");
+        foreach (var expr in expresionesPromedios)
+        {
+            ConsolaVirtual.Escribir("T(n) simplificada ~ " + expr);
+        }
     }
 
 
@@ -268,7 +331,6 @@ public class Asignacion
             return int.MaxValue;  // Si falla, consideramos que no se puede comparar bien
         }
     }
-
 
     private string ObtenerExpresionManual_SoloCuerpoClase(SyntaxNode nodo)
     {
@@ -501,18 +563,17 @@ public class Asignacion
                 }
                 break;
 
+
             case IfStatementSyntax ifStmt:
                 ConsolaVirtual.Escribir("→ Inicia if");
 
-                var tnIndividuales = new List<(string tipo, string formula, int valor)>(); // Ej: ("if", 4)
+                var tnIndividuales = new List<(string tipo, string formula, int valor)>();
                 var resultadoIf = new List<string>();
-                var condicionesPrevias = new List<string>(); // Guardará condiciones para else if y else
 
                 // Procesar condición del if
                 var condIf = new List<string>();
                 ProcesarExpresion(ifStmt.Condition, condIf);
-                resultadoIf.AddRange(condIf);         // Se usa en el resultado global
-                condicionesPrevias.AddRange(condIf);
+                resultadoIf.AddRange(condIf);
 
                 // Procesar cuerpo del if
                 string cuerpoIf = ObtenerExpresionManual(ifStmt.Statement);
@@ -527,53 +588,54 @@ public class Asignacion
                 ConsolaVirtual.Escribir($"**_T(n) del if simplificada ~ {tIfSimplificada}_**");
                 tnIndividuales.Add(("if", tIfSimplificada, EvaluarComplejidad(tIfSimplificada)));
 
-
-
+                // Variables para manejar condiciones acumulativas
+                var condicionesAcumuladas = new List<string>(condIf);
                 var elseNodo = ifStmt.Else;
+                int contadorElseIf = 1;
 
                 while (elseNodo != null)
                 {
                     if (elseNodo.Statement is IfStatementSyntax elseIfStmt)
                     {
-                        ConsolaVirtual.Escribir("→ Inicia else if");
+                        ConsolaVirtual.Escribir($"→ Inicia else if {contadorElseIf}");
 
                         var resultadoElseIf = new List<string>();
-                        var condicionesSoloParaImpresion = new List<string>(condicionesPrevias); // Clon
+
+                        // Agregar condiciones acumuladas (las condiciones previas que deben evaluarse)
+                        resultadoElseIf.AddRange(condicionesAcumuladas);
 
                         // Procesar condición actual del else if
                         var condElseIf = new List<string>();
                         ProcesarExpresion(elseIfStmt.Condition, condElseIf);
                         resultadoElseIf.AddRange(condElseIf);
-                        condicionesPrevias.AddRange(condElseIf);
 
+                        // Agregar la condición actual a las acumuladas para el siguiente else if
+                        condicionesAcumuladas.AddRange(condElseIf);
 
                         // Procesar cuerpo del else if
                         string cuerpoElseIf = ObtenerExpresionManual(elseIfStmt.Statement);
                         if (!string.IsNullOrWhiteSpace(cuerpoElseIf))
                             resultadoElseIf.Add($"({cuerpoElseIf})");
 
-                        ConsolaVirtual.Escribir("→ Finaliza else if");
+                        ConsolaVirtual.Escribir($"→ Finaliza else if {contadorElseIf}");
 
-                        // Fórmula individual = condiciones previas + condición actual + cuerpo
-                        var resultadoTotalImpresion = new List<string>();
-                        resultadoTotalImpresion.AddRange(condicionesSoloParaImpresion);
-                        resultadoTotalImpresion.AddRange(resultadoElseIf);
-
-                        string expresionElseIf = string.Join(" + ", resultadoTotalImpresion);
+                        string expresionElseIf = string.Join(" + ", resultadoElseIf);
                         string tElseIfSimplificada = ResolverFormulaSilenciosa(expresionElseIf);
-                        ConsolaVirtual.Escribir($"**_T(n) del else if = {expresionElseIf}_**");
-                        ConsolaVirtual.Escribir($"**_T(n) del else if simplificada ~ {tElseIfSimplificada}_**");
-                        tnIndividuales.Add(("else if", tElseIfSimplificada, EvaluarComplejidad(tElseIfSimplificada)));
-
+                        ConsolaVirtual.Escribir($"**_T(n) del else if {contadorElseIf} = {expresionElseIf}_**");
+                        ConsolaVirtual.Escribir($"**_T(n) del else if {contadorElseIf} simplificada ~ {tElseIfSimplificada}_**");
+                        tnIndividuales.Add(($"else if {contadorElseIf}", tElseIfSimplificada, EvaluarComplejidad(tElseIfSimplificada)));
 
                         elseNodo = elseIfStmt.Else;
+                        contadorElseIf++;
                     }
                     else
                     {
                         ConsolaVirtual.Escribir("→ Inicia else");
 
                         var resultadoElse = new List<string>();
-                        var condicionesSoloParaImpresion = new List<string>(condicionesPrevias); // Clon
+
+                        // Agregar todas las condiciones acumuladas
+                        resultadoElse.AddRange(condicionesAcumuladas);
 
                         // Procesar cuerpo del else
                         string cuerpoElse = ObtenerExpresionManual(elseNodo.Statement);
@@ -582,47 +644,43 @@ public class Asignacion
 
                         ConsolaVirtual.Escribir("→ Finaliza else");
 
-                        // Fórmula individual = condiciones previas + cuerpo
-                        var resultadoTotalImpresion = new List<string>();
-                        resultadoTotalImpresion.AddRange(condicionesSoloParaImpresion);
-                        resultadoTotalImpresion.AddRange(resultadoElse);
-
-                        string expresionElse = string.Join(" + ", resultadoTotalImpresion);
+                        string expresionElse = string.Join(" + ", resultadoElse);
                         string tElseSimplificada = ResolverFormulaSilenciosa(expresionElse);
                         ConsolaVirtual.Escribir($"**_T(n) del else = {expresionElse}_**");
                         ConsolaVirtual.Escribir($"**_T(n) del else simplificada ~ {tElseSimplificada}_**");
                         tnIndividuales.Add(("else", tElseSimplificada, EvaluarComplejidad(tElseSimplificada)));
 
-                        if (tnIndividuales.Any())
-                        {
-                            var mayor = tnIndividuales.MaxBy(t => t.valor);
-                            var menor = tnIndividuales.MinBy(t => t.valor);
-
-                            ConsolaVirtual.Escribir("");
-                            ConsolaVirtual.Escribir("--- Comparación de T(n) individuales ---");
-                            ConsolaVirtual.Escribir($"🟥 Cota superior → bloque **{mayor.tipo}** con T(n) = {mayor.formula}");
-                            ConsolaVirtual.Escribir($"🟩 Cota inferior → bloque **{menor.tipo}** con T(n) = {menor.formula}");
-
-                            resultado.Add(mayor.formula);
-
-                            ConsolaVirtual.ListaSuperioresGlobales?.Clear();
-                            ConsolaVirtual.ListaInferioresGlobales?.Clear();
-                            ConsolaVirtual.ListaSuperioresGlobales?.Add(mayor.formula);
-                            ConsolaVirtual.ListaInferioresGlobales?.Add(menor.formula);
-
-                            // 🟦 Ahora guardamos las ramas individuales para el promedio
-                            ConsolaVirtual.ListaPromediosGlobales ??= new List<string>();
-                            ConsolaVirtual.ListaPromediosGlobales.AddRange(tnIndividuales.Select(t => t.formula));
-                        }
                         break;
                     }
+                }
 
+                // Análisis final - SOLO al final del procesamiento completo del if-else
+                if (tnIndividuales.Any())
+                {
+                    var mayor = tnIndividuales.MaxBy(t => t.valor);
+                    var menor = tnIndividuales.MinBy(t => t.valor);
+
+                    ConsolaVirtual.Escribir("");
+                    ConsolaVirtual.Escribir("--- Comparación de T(n) individuales ---");
+                    ConsolaVirtual.Escribir($"🟥 Cota superior → bloque **{mayor.tipo}** con T(n) = {mayor.formula}");
+                    ConsolaVirtual.Escribir($"🟩 Cota inferior → bloque **{menor.tipo}** con T(n) = {menor.formula}");
+
+                    // Para el resultado principal, usar la cota superior
+                    resultado.Add(mayor.formula);
+
+                    // Limpiar y establecer las listas globales SOLO para este if-else
+                    ConsolaVirtual.ListaSuperioresGlobales?.Clear();
+                    ConsolaVirtual.ListaInferioresGlobales?.Clear();
+                    ConsolaVirtual.ListaPromediosGlobales?.Clear();
+
+                    ConsolaVirtual.ListaSuperioresGlobales?.Add(mayor.formula);
+                    ConsolaVirtual.ListaInferioresGlobales?.Add(menor.formula);
+
+                    // Para el promedio, usar solo las ramas de ESTE nivel
+                    ConsolaVirtual.ListaPromediosGlobales ??= new List<string>();
+                    ConsolaVirtual.ListaPromediosGlobales.AddRange(tnIndividuales.Select(t => t.formula));
                 }
                 break;
-
-
-
-
 
             default:
                 //ConsolaVirtual.Escribir($"[{hijo}] Nodo no clasificado directamente, se analiza internamente.");
@@ -633,9 +691,7 @@ public class Asignacion
                     resultado.Add(sub);
                 }
                 break;
-
         }
-
         return resultado;
     }
 
@@ -786,5 +842,291 @@ public class Asignacion
         }
     }
 
+
+    private string ConstruirExpresionPromedio(string expresionOriginal)
+    {
+        if (ConsolaVirtual.ListaPromediosGlobales == null || !ConsolaVirtual.ListaPromediosGlobales.Any())
+        {
+            return expresionOriginal; // Si no hay múltiples ramas, el promedio es igual a la expresión original
+        }
+
+        if (ConsolaVirtual.ListaSuperioresGlobales == null || !ConsolaVirtual.ListaSuperioresGlobales.Any())
+        {
+            return expresionOriginal;
+        }
+
+        // Calcular el promedio de todas las ramas del if-else
+        string cotaSuperior = ConsolaVirtual.ListaSuperioresGlobales.First();
+        string promedioCalculado = CalcularPromedioRamas(ConsolaVirtual.ListaPromediosGlobales);
+
+        // Sustituir la cota superior por el promedio calculado
+        if (expresionOriginal.Contains(cotaSuperior))
+        {
+            return expresionOriginal.Replace(cotaSuperior, promedioCalculado);
+        }
+
+        return expresionOriginal;
+    }
+
+    // Método corregido para calcular el promedio
+    private string CalcularPromedioRamas(List<string> ramas)
+    {
+        if (ramas == null || !ramas.Any())
+            return "0";
+
+        if (ramas.Count == 1)
+            return ramas.First();
+
+        try
+        {
+            // En lugar de evaluar con n=1, trabajamos directamente con las fórmulas simbólicas
+            ConsolaVirtual.Escribir($"\n--- Calculando promedio de {ramas.Count} ramas ---");
+
+            // Mostrar las ramas individuales
+            for (int i = 0; i < ramas.Count; i++)
+            {
+                ConsolaVirtual.Escribir($"Rama {i + 1}: {ramas[i]}");
+            }
+
+            // Crear la expresión de suma de todas las ramas
+            string sumaTotal = string.Join(" + ", ramas.Select(r => $"({r})"));
+            ConsolaVirtual.Escribir($"Suma total: {sumaTotal}");
+
+            // Dividir entre el número de ramas para obtener el promedio
+            string expresionPromedio = $"({sumaTotal})/{ramas.Count}";
+            ConsolaVirtual.Escribir($"Expresión promedio: {expresionPromedio}");
+
+            // Simplificar usando MathNet.Symbolics
+            try
+            {
+                // Preparar la expresión para MathNet
+                string exprParaMathNet = expresionPromedio
+                    .Replace("n(", "n*(")
+                    .Replace("[", "(")
+                    .Replace("]", ")");
+
+                var parsed = Infix.ParseOrThrow(exprParaMathNet);
+                var simplificada = Algebraic.Expand(parsed);
+                string resultado = Infix.Format(simplificada);
+
+                ConsolaVirtual.Escribir($"Promedio simplificado: {resultado}");
+                return resultado;
+            }
+            catch (Exception ex)
+            {
+                ConsolaVirtual.Escribir($"Error en simplificación simbólica: {ex.Message}");
+
+                // Fallback: crear el promedio manualmente
+                return CrearPromedioManual(ramas);
+            }
+        }
+        catch (Exception ex)
+        {
+            ConsolaVirtual.Escribir($"Error general calculando promedio: {ex.Message}");
+            // En caso de error total, usar la primera rama como fallback
+            return ramas.First();
+        }
+    }
+
+    private string CrearPromedioManual(List<string> ramas)
+    {
+        try
+        {
+            // Crear un diccionario para agrupar términos por potencia de n
+            var terminosPorPotencia = new Dictionary<int, List<double>>(); // potencia -> lista de coeficientes
+            var constantesTotales = new List<double>();
+
+            foreach (var rama in ramas)
+            {
+                // Parsear cada rama para extraer términos
+                var terminos = ParsearExpresionCompleta(rama);
+
+                foreach (var termino in terminos)
+                {
+                    if (termino.potencia == 0) // término constante
+                    {
+                        constantesTotales.Add(termino.coeficiente);
+                    }
+                    else
+                    {
+                        if (!terminosPorPotencia.ContainsKey(termino.potencia))
+                            terminosPorPotencia[termino.potencia] = new List<double>();
+
+                        terminosPorPotencia[termino.potencia].Add(termino.coeficiente);
+                    }
+                }
+            }
+
+            // Calcular promedios
+            var resultadoTerminos = new List<string>();
+
+            // Agregar constante promedio
+            if (constantesTotales.Any())
+            {
+                double promedioConstante = constantesTotales.Average();
+                if (Math.Abs(promedioConstante - Math.Round(promedioConstante)) < 0.001)
+                    resultadoTerminos.Add(Math.Round(promedioConstante).ToString());
+                else
+                    resultadoTerminos.Add(promedioConstante.ToString("F2"));
+            }
+
+            // Agregar términos con n
+            foreach (var kvp in terminosPorPotencia.OrderBy(x => x.Key))
+            {
+                double promedioCoef = kvp.Value.Average();
+
+                string coefStr;
+                if (Math.Abs(promedioCoef - Math.Round(promedioCoef)) < 0.001)
+                    coefStr = Math.Round(promedioCoef).ToString();
+                else
+                    coefStr = promedioCoef.ToString("F2");
+
+                if (kvp.Key == 1)
+                    resultadoTerminos.Add($"{coefStr}*n");
+                else
+                    resultadoTerminos.Add($"{coefStr}*n^{kvp.Key}");
+            }
+
+            return string.Join(" + ", resultadoTerminos);
+        }
+        catch
+        {
+            // Si falla todo, devolver la expresión como fracción
+            return $"({string.Join(" + ", ramas)})/{ramas.Count}";
+        }
+    }
+
+    private List<(double coeficiente, int potencia)> ParsearExpresionCompleta(string expresion)
+    {
+        var terminos = new List<(double coeficiente, int potencia)>();
+
+        try
+        {
+            ConsolaVirtual.Escribir($"  Parseando: {expresion}");
+
+            // Manejar fracciones simples (ej: 48/5)
+            if (expresion.Contains("/") && !expresion.Contains("+") && !expresion.Contains("n"))
+            {
+                var segmentos = expresion.Split('/');
+                if (segmentos.Length == 2 && double.TryParse(segmentos[0], out double numerador) &&
+                    double.TryParse(segmentos[1], out double denominador))
+                {
+                    double valor = numerador / denominador;
+                    terminos.Add((valor, 0));
+                    ConsolaVirtual.Escribir($"    Fracción: {numerador}/{denominador} = {valor}");
+                    return terminos;
+                }
+            }
+
+            // Intentar evaluar con MathNet.Symbolics para casos complejos
+            try
+            {
+                string exprParaEvaluar = expresion
+                    .Replace("n(", "n*(")
+                    .Replace("[", "(")
+                    .Replace("]", ")");
+
+                // Para fracciones complejas, intentar simplificar primero
+                var parsed = Infix.ParseOrThrow(exprParaEvaluar);
+                var simplificada = Algebraic.Expand(parsed);
+                string resultado = Infix.Format(simplificada);
+
+                ConsolaVirtual.Escribir($"    Simplificada: {resultado}");
+
+                // Ahora parsear el resultado simplificado
+                return ParsearTerminosBasicos(resultado);
+            }
+            catch
+            {
+                // Si MathNet falla, usar parsing manual
+                return ParsearTerminosBasicos(expresion);
+            }
+        }
+        catch (Exception ex)
+        {
+            ConsolaVirtual.Escribir($"    Error parseando '{expresion}': {ex.Message}");
+            // En caso de error, asumir que es una constante con valor 1
+            terminos.Add((1, 0));
+        }
+
+        return terminos;
+    }
+
+    private List<(double coeficiente, int potencia)> ParsearTerminosBasicos(string formula)
+    {
+        var terminos = new List<(double coeficiente, int potencia)>();
+
+        try
+        {
+            // Limpiar y dividir por +, pero preservar signos negativos
+            formula = formula.Replace(" ", "");
+            var elementosFormula = new List<string>();
+
+            // Dividir manteniendo signos
+            string[] segmentosFormula = formula.Split('+');
+            foreach (string frag in segmentosFormula)
+            {
+                if (!string.IsNullOrEmpty(frag.Trim()))
+                {
+                    elementosFormula.Add(frag.Trim());
+                }
+            }
+
+            foreach (var elemento in elementosFormula)
+            {
+                if (string.IsNullOrEmpty(elemento)) continue;
+
+                ConsolaVirtual.Escribir($"    Analizando término: '{elemento}'");
+
+                if (elemento.Contains("n^"))
+                {
+                    // Término con potencia (ej: 5*n^2 o n^3)
+                    var partesN = elemento.Split(new[] { "*n^" }, StringSplitOptions.None);
+                    if (partesN.Length == 2)
+                    {
+                        double coef = string.IsNullOrEmpty(partesN[0]) ? 1 : double.Parse(partesN[0]);
+                        int pot = int.Parse(partesN[1]);
+                        terminos.Add((coef, pot));
+                        ConsolaVirtual.Escribir($"      → Coef: {coef}, Pot: {pot}");
+                    }
+                    else if (elemento.StartsWith("n^"))
+                    {
+                        int pot = int.Parse(elemento.Substring(2));
+                        terminos.Add((1, pot));
+                        ConsolaVirtual.Escribir($"      → Coef: 1, Pot: {pot}");
+                    }
+                }
+                else if (elemento.Contains("*n") && !elemento.Contains("^"))
+                {
+                    // Término lineal (ej: 5*n)
+                    var coefStr = elemento.Replace("*n", "");
+                    double coef = string.IsNullOrEmpty(coefStr) ? 1 : double.Parse(coefStr);
+                    terminos.Add((coef, 1));
+                    ConsolaVirtual.Escribir($"      → Coef: {coef}, Pot: 1");
+                }
+                else if (elemento == "n")
+                {
+                    terminos.Add((1, 1));
+                    ConsolaVirtual.Escribir($"      → Coef: 1, Pot: 1");
+                }
+                else
+                {
+                    // Término constante (incluyendo fracciones decimales)
+                    if (double.TryParse(elemento, out double constante))
+                    {
+                        terminos.Add((constante, 0));
+                        ConsolaVirtual.Escribir($"      → Constante: {constante}");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ConsolaVirtual.Escribir($"    Error en parsing básico: {ex.Message}");
+            terminos.Add((1, 0)); // fallback
+        }
+
+        return terminos;
+    }
 }
 
