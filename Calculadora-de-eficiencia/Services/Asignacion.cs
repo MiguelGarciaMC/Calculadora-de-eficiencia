@@ -42,6 +42,7 @@ public class Asignacion
         }
 
         var expresionesSimplificadas = new List<string>();
+        var expresionesInferiores = new List<string>();
 
         foreach (var clase in clases)
         {
@@ -64,6 +65,7 @@ public class Asignacion
 
                 string simplificadaClase = ObtenerCotaSuperior(resultadoClase);
                 expresionesSimplificadas.Add(simplificadaClase);
+                expresionesInferiores.Add(simplificadaClase);
             }
 
             var metodosPublicos = clase.Members
@@ -79,21 +81,35 @@ public class Asignacion
             foreach (var metodo in metodosPublicos)
             {
                 ConsolaVirtual.Escribir($"\n--- MÉTODO PÚBLICO DETECTADO: {metodo.Identifier.Text} en {clase.Identifier.Text} ---");
+                ConsolaVirtual.ListaInferioresGlobales?.Clear();
 
                 string resultadoMetodo = ObtenerExpresionManual(metodo);
-
-                ConsolaVirtual.Escribir($"T(n) = {resultadoMetodo}");
 
                 int totalOperacionesMetodo = resultadoMetodo.Split('+').Select(x => x.Trim()).Count(x => !string.IsNullOrEmpty(x));
                 ConsolaVirtual.Escribir($"Total de operaciones detectadas en el método: {totalOperacionesMetodo}");
 
                 string simplificadaMetodo = ObtenerCotaSuperior(resultadoMetodo);
                 expresionesSimplificadas.Add(simplificadaMetodo);
+
+                // Construir la expresión inferior usando las cotas inferiores recolectadas
+                string expresionInferior = ConstruirExpresionInferior(resultadoMetodo);
+                string simplificadaInferior = ObtenerCotaSuperior(expresionInferior, false); // Usar la misma función pero sin imprimir
+                                                                                             // Imprimir el análisis simbólico de la fórmula de cota inferior
+                ConsolaVirtual.Escribir("\n--- Resolución simbólica de cota inferior (con MathNet.Symbolics) ---");
+                ConsolaVirtual.Escribir("Expandida: " + expresionInferior);
+                ConsolaVirtual.Escribir("T(n) simplificada ~ " + simplificadaInferior);
+                expresionesInferiores.Add(simplificadaInferior);
             }
         }
 
         ConsolaVirtual.Escribir("\n\nTotal de operaciones para la cota superior T(n) simplificadas");
         foreach (var expr in expresionesSimplificadas)
+        {
+            ConsolaVirtual.Escribir("T(n) simplificada ~ " + expr);
+        }
+
+        ConsolaVirtual.Escribir("\n\nTotal de operaciones para la cota inferior T(n) simplificadas");
+        foreach (var expr in expresionesInferiores)
         {
             ConsolaVirtual.Escribir("T(n) simplificada ~ " + expr);
         }
@@ -146,7 +162,7 @@ public class Asignacion
             }
         }
 
-        ConsolaVirtual.Escribir("\nSuma");
+        ConsolaVirtual.Escribir("\nSuma SUPERIOR");
         string total = constantes.ToString();
 
         foreach (var kvp in sumaPorExponente.OrderBy(k => k.Key))
@@ -156,7 +172,66 @@ public class Asignacion
 
         ConsolaVirtual.Escribir($"T(n) Cota superior simplificada = {total}");
 
+        // --- Suma total formal INFERIOR ---
+        var sumaPorExponenteInf = new Dictionary<int, int>(); // clave: exponente, valor: coeficiente
+        int constantesInf = 0;
+
+        foreach (var expr in expresionesInferiores)
+        {
+            var partes = expr.Replace(" ", "").Split('+');
+
+            foreach (var parte in partes)
+            {
+                if (parte.Contains("n"))
+                {
+                    if (parte.Contains("^"))
+                    {
+                        var partesExp = parte.Split("*n^");
+                        int coef = partesExp.Length == 2 ? int.Parse(partesExp[0]) : 1;
+                        int exponente = int.Parse(partesExp[1]);
+
+                        if (!sumaPorExponenteInf.ContainsKey(exponente))
+                            sumaPorExponenteInf[exponente] = 0;
+
+                        sumaPorExponenteInf[exponente] += coef;
+                    }
+                    else if (parte.Contains("*n"))
+                    {
+                        var coef = int.Parse(parte.Replace("*n", ""));
+                        if (!sumaPorExponenteInf.ContainsKey(1))
+                            sumaPorExponenteInf[1] = 0;
+
+                        sumaPorExponenteInf[1] += coef;
+                    }
+                    else if (parte == "n")
+                    {
+                        if (!sumaPorExponenteInf.ContainsKey(1))
+                            sumaPorExponenteInf[1] = 0;
+
+                        sumaPorExponenteInf[1] += 1;
+                    }
+                }
+                else
+                {
+                    if (int.TryParse(parte, out int constante))
+                        constantesInf += constante;
+                }
+            }
+        }
+
+        ConsolaVirtual.Escribir("\nSuma INFERIOR");
+        string totalInf = constantesInf.ToString();
+
+        foreach (var kvp in sumaPorExponenteInf.OrderBy(k => k.Key))
+        {
+            totalInf += $" + {kvp.Value}*n^{kvp.Key}";
+        }
+
+        ConsolaVirtual.Escribir($"T(n) Cota inferior simplificada = {totalInf}");
+
+
     }
+
 
     private int EvaluarComplejidad(string formula)
     {
@@ -527,8 +602,17 @@ public class Asignacion
                             ConsolaVirtual.Escribir("--- Comparación de T(n) individuales ---");
                             ConsolaVirtual.Escribir($"🟥 Cota superior → bloque **{mayor.tipo}** con T(n) = {mayor.formula}");
                             ConsolaVirtual.Escribir($"🟩 Cota inferior → bloque **{menor.tipo}** con T(n) = {menor.formula}");
+
                             resultado.Add(mayor.formula);
 
+                            ConsolaVirtual.ListaSuperioresGlobales?.Clear();
+                            ConsolaVirtual.ListaInferioresGlobales?.Clear();
+                            ConsolaVirtual.ListaSuperioresGlobales?.Add(mayor.formula);
+                            ConsolaVirtual.ListaInferioresGlobales?.Add(menor.formula);
+
+                            // 🟦 Ahora guardamos las ramas individuales para el promedio
+                            ConsolaVirtual.ListaPromediosGlobales ??= new List<string>();
+                            ConsolaVirtual.ListaPromediosGlobales.AddRange(tnIndividuales.Select(t => t.formula));
                         }
                         break;
                     }
@@ -658,6 +742,28 @@ public class Asignacion
             return "Error";
         }
     }
+
+    private string ConstruirExpresionInferior(string expresionOriginal)
+    {
+        if (ConsolaVirtual.ListaInferioresGlobales == null || ConsolaVirtual.ListaSuperioresGlobales == null)
+            return expresionOriginal;
+
+        if (!ConsolaVirtual.ListaInferioresGlobales.Any() || !ConsolaVirtual.ListaSuperioresGlobales.Any())
+            return expresionOriginal;
+
+        string cotaSuperior = ConsolaVirtual.ListaSuperioresGlobales.First();
+        string cotaInferior = ConsolaVirtual.ListaInferioresGlobales.First();
+
+        // Sustituir la fórmula completa de la cota superior por la cota inferior
+        if (expresionOriginal.Contains(cotaSuperior))
+        {
+            return expresionOriginal.Replace(cotaSuperior, cotaInferior);
+        }
+
+        return expresionOriginal;
+    }
+
+
 
     private string ResolverFormulaSilenciosa(string expresion)
     {

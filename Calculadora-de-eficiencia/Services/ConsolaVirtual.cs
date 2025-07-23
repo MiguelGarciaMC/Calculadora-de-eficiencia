@@ -6,6 +6,11 @@ namespace Calculadora_de_eficiencia.Utils
     public static class ConsolaVirtual
     {
         private static List<string> mensajes = new();
+        public static List<string> ListaSuperioresGlobales = new();
+        public static List<string>? ListaInferioresGlobales = new();
+        
+
+        public static List<string> ListaPromediosGlobales { get; set; } = new();
 
         public static void Escribir(string texto)
         {
