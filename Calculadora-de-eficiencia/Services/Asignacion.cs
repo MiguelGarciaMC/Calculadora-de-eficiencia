@@ -364,12 +364,13 @@ public class Asignacion : CSharpSyntaxWalker
         {
             ConsolaVirtual.Escribir($"[{node}] Detectado: Console.WriteLine ␦ valor: {valoresOperacion["console_write"]}");
             currentBlockExpressions.Peek().Add(valoresOperacion["console_write"]);
+
             foreach (var arg in llamada.ArgumentList.Arguments)
             {
                 ProcesarExpresion(arg.Expression);
             }
         }
-        else if (node.Expression is AssignmentExpressionSyntax exprAssign)
+        else if (node.Expression is AssignmentExpressionSyntax)
         {
             base.VisitExpressionStatement(node); // Deja que el walker maneje la asignación por su cuenta
         }
@@ -387,12 +388,18 @@ public class Asignacion : CSharpSyntaxWalker
             ConsolaVirtual.Escribir($"[{preUnary}] Detectado: incremento/decremento ␦ valor: 1");
             currentBlockExpressions.Peek().Add("1");
         }
+        else if (node.Expression is InvocationExpressionSyntax invocacion)
+        {
+            // Llamada general a un método (posiblemente recursiva)
+            ProcesarLlamadaRecursiva(invocacion, currentBlockExpressions.Peek(), node);
+        }
         else
         {
-            // Procesar otras expresiones dentro de sentencias, como llamadas a métodos generales
-            base.VisitExpressionStatement(node);
+            // Otras expresiones
+            ProcesarExpresion(node.Expression);
         }
     }
+
 
     public override void VisitIfStatement(IfStatementSyntax node)
     {
@@ -519,7 +526,7 @@ public class Asignacion : CSharpSyntaxWalker
             {
                 ProcesarExpresion(arg.Expression);
             }
-            ProcesarExpresion(acceso.Expression); // Recurre sobre la expresión base (por ejemplo: tensor en tensor[1][2])
+            ProcesarExpresion(acceso.Expression); // Recurre sobre la base
         }
         else if (expr is BinaryExpressionSyntax bin)
         {
@@ -554,9 +561,17 @@ public class Asignacion : CSharpSyntaxWalker
                 currentBlockExpressions.Peek().Add(valoresOperacion["logica"]);
             }
         }
+        else if (expr is InvocationExpressionSyntax invocacion)
+        {
+            // Detección de llamada recursiva dentro de expresión
+            ConsolaVirtual.Escribir($"[{invocacion}] Detectado: posible llamada a función");
+
+            ProcesarLlamadaRecursiva(invocacion, currentBlockExpressions.Peek(), expr); // ← Usamos el contexto actual como 'expr'
+        }
     }
 
-    // --- Métodos de Ayuda (ya existentes, quizás con ligeras modificaciones) ---
+
+    // --- Métodos de Ayuda
 
     public string ResolverFormula(string expresion)
     {
@@ -765,7 +780,6 @@ public class Asignacion : CSharpSyntaxWalker
         }
     }
 
-
     // Auxiliar para ordenar la suma total
     private static int GetOrderScore(string key)
     {
@@ -785,4 +799,116 @@ public class Asignacion : CSharpSyntaxWalker
         if (key == "1") return 1;
         return 0;
     }
+
+    private void ProcesarLlamadaRecursiva(InvocationExpressionSyntax invocacion, List<string> resultado, SyntaxNode contexto, int nivel = 0)
+    {
+        if (nivel > 10)
+        {
+            ConsolaVirtual.Escribir("[WARN] Límite de profundidad alcanzado en llamada recursiva. Se detiene.");
+            return;
+        }
+
+        var metodoActual = ObtenerMetodoContenedor(contexto)?.Identifier.Text;
+        if (metodoActual == null)
+        {
+            ConsolaVirtual.Escribir("[WARN] No se pudo determinar el método contenedor para la llamada.");
+            return;
+        }
+
+        string nombreLlamado = invocacion.Expression is MemberAccessExpressionSyntax memberAccess
+            ? memberAccess.Name.Identifier.Text
+            : invocacion.Expression is IdentifierNameSyntax identifier
+                ? identifier.Identifier.Text
+                : invocacion.Expression.ToString();
+
+        if (nombreLlamado == metodoActual)
+        {
+            ConsolaVirtual.Escribir($"[INFO] Llamada recursiva detectada en expresión: {nombreLlamado}");
+            var recs = ObtenerRecurrenciasDesdeLlamada(invocacion, contexto);
+            foreach (var rec in recs)
+            {
+                if (!resultado.Contains(rec))
+                    resultado.Add(rec);
+
+                // ✅ Agregar al stack de expresiones para que aparezca en el conteo
+                currentBlockExpressions.Peek().Add(rec);
+            }
+        }
+        else
+        {
+            ConsolaVirtual.Escribir($"[INFO] Llamada a función no recursiva: {nombreLlamado}");
+        }
+    }
+
+
+    private List<string> ObtenerRecurrenciasDesdeLlamada(InvocationExpressionSyntax llamada, SyntaxNode contexto)
+    {
+        var resultado = new List<string>();
+        var ignorarArgumentos = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "arr", "valor", "left", "right", "target"
+    };
+
+        var metodoActual = ObtenerMetodoContenedor(llamada)?.Identifier.Text;
+        if (metodoActual == null)
+        {
+            ConsolaVirtual.Escribir("[WARN] Método contenedor no encontrado durante análisis de recurrencias.");
+            return resultado;
+        }
+
+        var args = llamada.ArgumentList.Arguments.Select(a => a.Expression.ToString().Replace(" ", "")).ToList();
+        ConsolaVirtual.Escribir($"[DEBUG] Analizando llamada recursiva a {metodoActual} con argumentos: [{string.Join(", ", args)}]");
+
+        if (metodoActual == "MergeSort" && args.Count >= 3)
+        {
+            string izq = args[1], der = args[2];
+            string nSize = $"({der}-{izq}+1)";
+            ConsolaVirtual.Escribir($"[DEBUG] Detectada recursión MergeSort, tamaño subproblema ~ n/2 donde n={nSize}");
+            resultado.Add("T(n / 2)");
+            resultado.Add("T(n / 2)");
+            return resultado;
+        }
+
+        if (metodoActual is "BusquedaBinaria" or "BinarySearch")
+        {
+            ConsolaVirtual.Escribir($"[DEBUG] Detectada recursión tipo búsqueda binaria");
+            resultado.Add("T(n / 2)");
+            return resultado;
+        }
+
+        foreach (var arg in args)
+        {
+            if (ignorarArgumentos.Contains(arg))
+            {
+                ConsolaVirtual.Escribir($"[DEBUG] Ignorando argumento no‑recursivo: '{arg}'");
+                continue;
+            }
+
+            switch (arg)
+            {
+                case "n": resultado.Add("T(n)"); break;
+                case "n-1": resultado.Add("T(n - 1)"); break;
+                case "n-2": resultado.Add("T(n - 2)"); break;
+                case "n/2": resultado.Add("T(n / 2)"); break;
+                case "n/2-1": resultado.Add("T(n / 2 - 1)"); break;
+                case "n/2+1": resultado.Add("T(n / 2 + 1)"); break;
+                default:
+                    ConsolaVirtual.Escribir($"[DEBUG] Argumento no reconocido en llamada recursiva: {arg}");
+                    break;
+            }
+        }
+
+        if (!resultado.Any())
+        {
+            ConsolaVirtual.Escribir("[WARN] No se detectaron patrones recursivos reconocibles.");
+        }
+
+        return resultado;
+    }
+
+    private MethodDeclarationSyntax ObtenerMetodoContenedor(SyntaxNode nodo)
+    {
+        return nodo.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
+    }
+
 }
