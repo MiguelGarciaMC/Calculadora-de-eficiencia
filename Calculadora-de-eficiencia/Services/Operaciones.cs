@@ -304,7 +304,7 @@ namespace Calculadora_de_eficiencia.Services
             }
             else
             {
-                ConsolaVirtual.Escribir("No se detectaron términos recursivos para analizar cota.");
+                ConsolaVirtual.Escribir("No se detectaron términos recursivos para analizar.");
             }
         }
 
