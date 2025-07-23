@@ -163,6 +163,7 @@ namespace Calculadora_de_eficiencia.Services
         public static void SumarYMostrarTotalFormal(List<string> expresionesSimplificadas)
         {
             var sumaPorGrado = new Dictionary<string, int>();
+            var terminosRecursivos = new List<string>();
 
             foreach (var expr in expresionesSimplificadas)
             {
@@ -172,15 +173,23 @@ namespace Calculadora_de_eficiencia.Services
                 {
                     if (string.IsNullOrWhiteSpace(parte)) continue;
 
-                    if (parte.Contains("n!")) { sumaPorGrado["n!"] = int.MaxValue; continue; } // Una vez que hay un factorial, domina
-                    if (Regex.IsMatch(parte, @"\d*\*\d+\^n|\d+\^n")) { sumaPorGrado["b^n"] = int.MaxValue; continue; } // Exponencial
+                    // Detectar llamadas recursivas tipo T(n-1), T(n), etc.
+                    if (Regex.IsMatch(parte, @"T\(.+\)"))
+                    {
+                        // Agregar a lista de recursividad (sin sumar coeficientes)
+                        if (!terminosRecursivos.Contains(parte))
+                            terminosRecursivos.Add(parte);
+                        continue;
+                    }
+
+                    if (parte.Contains("n!")) { sumaPorGrado["n!"] = int.MaxValue; continue; }
+                    if (Regex.IsMatch(parte, @"\d*\*\d+\^n|\d+\^n")) { sumaPorGrado["b^n"] = int.MaxValue; continue; }
 
                     var nLogNMatch = Regex.Match(parte, @"^(\d+)?\*?n\*Log\(n\)$", RegexOptions.IgnoreCase);
                     if (nLogNMatch.Success)
                     {
                         int coef = nLogNMatch.Groups[1].Success ? int.Parse(nLogNMatch.Groups[1].Value) : 1;
-                        if (!sumaPorGrado.ContainsKey("n*Log(n)")) sumaPorGrado["n*Log(n)"] = 0;
-                        sumaPorGrado["n*Log(n)"] += coef;
+                        sumaPorGrado["n*Log(n)"] = sumaPorGrado.GetValueOrDefault("n*Log(n)", 0) + coef;
                         continue;
                     }
 
@@ -189,8 +198,7 @@ namespace Calculadora_de_eficiencia.Services
                     {
                         int coef = polynomialMatch.Groups[1].Success ? int.Parse(polynomialMatch.Groups[1].Value) : 1;
                         string grado = $"n^{polynomialMatch.Groups[2].Value}";
-                        if (!sumaPorGrado.ContainsKey(grado)) sumaPorGrado[grado] = 0;
-                        sumaPorGrado[grado] += coef;
+                        sumaPorGrado[grado] = sumaPorGrado.GetValueOrDefault(grado, 0) + coef;
                         continue;
                     }
 
@@ -198,8 +206,7 @@ namespace Calculadora_de_eficiencia.Services
                     if (linearMatch.Success)
                     {
                         int coef = linearMatch.Groups[1].Success ? int.Parse(linearMatch.Groups[1].Value) : 1;
-                        if (!sumaPorGrado.ContainsKey("n")) sumaPorGrado["n"] = 0;
-                        sumaPorGrado["n"] += coef;
+                        sumaPorGrado["n"] = sumaPorGrado.GetValueOrDefault("n", 0) + coef;
                         continue;
                     }
 
@@ -207,83 +214,99 @@ namespace Calculadora_de_eficiencia.Services
                     if (logMatch.Success)
                     {
                         int coef = logMatch.Groups[1].Success ? int.Parse(logMatch.Groups[1].Value) : 1;
-                        if (!sumaPorGrado.ContainsKey("Log(n)")) sumaPorGrado["Log(n)"] = 0;
-                        sumaPorGrado["Log(n)"] += coef;
+                        sumaPorGrado["Log(n)"] = sumaPorGrado.GetValueOrDefault("Log(n)", 0) + coef;
                         continue;
                     }
 
-                    // Es una constante
                     if (int.TryParse(parte, out int constante))
                     {
-                        if (!sumaPorGrado.ContainsKey("1")) sumaPorGrado["1"] = 0;
-                        sumaPorGrado["1"] += constante;
+                        sumaPorGrado["1"] = sumaPorGrado.GetValueOrDefault("1", 0) + constante;
                     }
                 }
             }
 
             ConsolaVirtual.Escribir("\nSuma Total Final:");
+            var totalFinal = new StringBuilder("T(n) simplificada total = ");
+            bool esPrimero = true;
 
-            if (sumaPorGrado.Count == 0)
+            var ordenado = sumaPorGrado.OrderByDescending(p => GetOrderScore(p.Key));
+
+            foreach (var par in ordenado)
             {
-                ConsolaVirtual.Escribir("T(n) simplificada total = 0");
-            }
-            else
-            {
-                StringBuilder totalFinal = new StringBuilder("T(n) simplificada total = ");
-                bool esPrimero = true;
+                int coef = par.Value;
+                string key = par.Key;
 
-                // Ordenar por complejidad para la presentación
-                var ordenado = sumaPorGrado.OrderByDescending(p => GetOrderScore(p.Key));
+                if (coef == 0) continue;
 
-                foreach (var par in ordenado)
-                {
-                    int coef = par.Value;
-                    string key = par.Key;
+                if (!esPrimero) totalFinal.Append(" + ");
+                esPrimero = false;
 
-                    if (coef == 0 && key != "0") continue; // No mostrar términos con coeficiente cero, a menos que sea el 0 literal
-
-                    if (!esPrimero)
-                        totalFinal.Append(" + ");
-                    else
-                        esPrimero = false;
-
-                    if (key == "1")
-                        totalFinal.Append($"{coef}");
-                    else if (key == "n" || key == "n*Log(n)" || key == "Log(n)" || key == "n!" || key == "b^n")
-                    {
-                        totalFinal.Append(coef == 1 ? key : $"{coef}*{key}");
-                    }
-                    else if (key.StartsWith("n^"))
-                    {
-                        totalFinal.Append(coef == 1 ? key : $"{coef}*{key}");
-                    }
-                }
-
-                // Si después de todos los cálculos, el totalFinal es solo "T(n) simplificada total = "
-                // y no hay ningún término, significa que es 0
-                if (totalFinal.ToString().Equals("T(n) simplificada total = ") || totalFinal.ToString().Equals("T(n) simplificada total = 0"))
-                {
-                    ConsolaVirtual.Escribir("T(n) simplificada total = 0");
-                }
+                if (key == "1")
+                    totalFinal.Append($"{coef}");
                 else
-                {
-                    ConsolaVirtual.Escribir(totalFinal.ToString());
-                }
+                    totalFinal.Append(coef == 1 ? key : $"{coef}*{key}");
+            }
 
-                // --- Análisis de Límite y Cota para el total final ---
-                // Reconstruir la expresión para el análisis de límite si es necesario
-                string finalExprForLimit = string.Join(" + ", ordenado.Select(p => {
+            // Agregar términos recursivos exactamente como están, separados con " + "
+            foreach (var term in terminosRecursivos)
+            {
+                if (!esPrimero) totalFinal.Append(" + ");
+                totalFinal.Append(term);
+                esPrimero = false;
+            }
+
+            if (esPrimero)
+                ConsolaVirtual.Escribir("T(n) simplificada total = 0");
+            else
+                ConsolaVirtual.Escribir(totalFinal.ToString());
+
+            // Opcional: analizar límite sólo si no hay recursividad
+            if (terminosRecursivos.Count == 0)
+            {
+                string finalExprForLimit = string.Join(" + ", ordenado.Select(p =>
+                {
                     if (p.Key == "1") return p.Value.ToString();
                     return p.Value == 1 ? p.Key : $"{p.Value}*{p.Key}";
-                }).Where(s => !string.IsNullOrEmpty(s)));
+                }));
 
                 if (!string.IsNullOrWhiteSpace(finalExprForLimit))
                 {
                     Operaciones.AnalizarLimite(finalExprForLimit);
                 }
             }
+            else
+            {
+                ConsolaVirtual.Escribir("\n[⚠️] Advertencia en el análisis del límite por presencia de términos recursivos.");
+            }
         }
 
+        public static void MostrarRecurrenciaYCota(string expresion)
+        {
+            ConsolaVirtual.Escribir($"T(n) = {expresion}");
+
+            // Detectar patrones simples de recurrencia y mostrar cota
+            if (Regex.IsMatch(expresion, @"T\(n\s*-\s*1\)"))
+            {
+                ConsolaVirtual.Escribir("Cota estimada: O(n) (recurrencia lineal tipo T(n) = T(n-1) + c)");
+            }
+            else if (Regex.IsMatch(expresion, @"T\(n\s*/\s*2\)"))
+            {
+                if (Regex.IsMatch(expresion, @"\+.*n\s*\*?\s*log\(n\)", RegexOptions.IgnoreCase))
+                    ConsolaVirtual.Escribir("Cota estimada: O(n log n) (recurrencia tipo divide y vencerás)");
+                else if (Regex.IsMatch(expresion, @"\+.*n", RegexOptions.IgnoreCase))
+                    ConsolaVirtual.Escribir("Cota estimada: O(n) (recurrencia tipo T(n) = 2T(n/2) + n)");
+                else
+                    ConsolaVirtual.Escribir("Cota estimada: O(log n) (recurrencia tipo T(n) = T(n/2) + c)");
+            }
+            else if (Regex.IsMatch(expresion, @"T\(n\)"))
+            {
+                ConsolaVirtual.Escribir("Cota estimada: No determinada (expresión con términos recursivos generales).");
+            }
+            else
+            {
+                ConsolaVirtual.Escribir("No se detectaron términos recursivos para analizar cota.");
+            }
+        }
 
         // Auxiliar para ordenar la suma total
         private static int GetOrderScore(string key)
