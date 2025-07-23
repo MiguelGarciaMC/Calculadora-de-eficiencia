@@ -79,7 +79,7 @@ public class Asignacion : CSharpSyntaxWalker
         }
 
         // --- Suma total formal ---
-        SumarYMostrarTotalFormal(globalSimplifiedExpressions);
+        Operaciones.SumarYMostrarTotalFormal(globalSimplifiedExpressions);
     }
 
     // --- Sobrescribir métodos Visit de CSharpSyntaxWalker ---
