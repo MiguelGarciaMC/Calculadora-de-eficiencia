@@ -124,10 +124,11 @@
             // 
             // pictureBox1
             // 
-            pictureBox1.Image = Properties.Resources.Captura_de_pantalla_2025_07_16_091731;
-            pictureBox1.Location = new Point(699, 12);
+            pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
+            pictureBox1.Location = new Point(685, 12);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(87, 65);
+            pictureBox1.Size = new Size(101, 73);
+            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.TabIndex = 5;
             pictureBox1.TabStop = false;
             // 
