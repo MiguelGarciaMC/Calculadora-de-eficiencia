@@ -338,5 +338,58 @@ namespace Calculadora_de_eficiencia.Services
             if (key == "1") return 1;
             return 0;
         }
+        public static void CalcularAsintotas(string expresionSimplificada)
+        {
+            ConsolaVirtual.Escribir("\n=== Operaciones (sacando asíntota) ===");
+
+            // Limpiar la expresión para el análisis
+            string expr = expresionSimplificada.Replace("~", "").Trim();
+
+            if (string.IsNullOrWhiteSpace(expr) || expr.Contains("T("))
+            {
+                ConsolaVirtual.Escribir("No se puede calcular asíntota para expresiones recursivas o vacías.");
+                return;
+            }
+
+            // Determinar el término dominante
+            string cotaSuperior, cotaInferior, cotaPromedio;
+
+            if (expr.Contains("n^3"))
+            {
+                cotaSuperior = "O(n³)";
+                cotaInferior = "Ω(n³)";
+                cotaPromedio = "Θ(n³)";
+            }
+            else if (expr.Contains("n^2"))
+            {
+                cotaSuperior = "O(n²)";
+                cotaInferior = "Ω(n²)";
+                cotaPromedio = "Θ(n²)";
+            }
+            else if (expr.Contains("n*log(n)") || expr.Contains("n log n"))
+            {
+                cotaSuperior = "O(n log n)";
+                cotaInferior = "Ω(n log n)";
+                cotaPromedio = "Θ(n log n)";
+            }
+            else if (expr.Contains("n"))
+            {
+                cotaSuperior = "O(n)";
+                cotaInferior = "Ω(n)";
+                cotaPromedio = "Θ(n)";
+            }
+            else
+            {
+                cotaSuperior = "O(1)";
+                cotaInferior = "Ω(1)";
+                cotaPromedio = "Θ(1)";
+            }
+
+            ConsolaVirtual.Escribir($"lim(n→∞) T(n) = {cotaSuperior}");
+            ConsolaVirtual.Escribir($"Cota superior sustituida: {cotaSuperior}");
+            ConsolaVirtual.Escribir($"Cota inferior sustituida: {cotaInferior}");
+            ConsolaVirtual.Escribir($"Cota promedio sustituida: {cotaPromedio}");
+        }
+
     }
 }

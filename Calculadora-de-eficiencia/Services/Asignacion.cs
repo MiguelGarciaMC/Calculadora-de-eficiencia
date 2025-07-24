@@ -11,6 +11,7 @@ using System.Linq.Expressions;
 
 public class Asignacion
 {
+
     private readonly Dictionary<string, string> valoresOperacion = new()
     {
         { "declaracion", "1" },
