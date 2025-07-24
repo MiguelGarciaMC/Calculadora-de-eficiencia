@@ -82,6 +82,7 @@ namespace Calculadora_de_eficiencia
             panel_inicio.Visible = true;
             panel_inicio.BringToFront();
             richTextBox1.Clear();
+            boton_archivo.Visible = false;
         }
 
         private void boton_evaluar_Click(object sender, EventArgs e)
@@ -89,6 +90,8 @@ namespace Calculadora_de_eficiencia
             if (string.IsNullOrEmpty(rutaArchivoCargado))
             {
                 MessageBox.Show("Primero debes cargar un archivo.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                // Oculta el botón de descarga si no hay archivo cargado
+                boton_archivo.Visible = false;
                 return;
             }
 
@@ -110,10 +113,17 @@ namespace Calculadora_de_eficiencia
                 richTextBox1.Clear();
                 richTextBox1.AppendText("Resultados de operaciones encontradas:\n\n");
                 richTextBox1.AppendText(ConsolaVirtual.ObtenerTodo());
+
+                // --- ¡AÑADE ESTA LÍNEA AQUÍ! ---
+                // Hace visible el botón de descarga una vez que la evaluación se ha completado
+                boton_archivo.Visible = true;
+                // -----------------------------
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Ocurrió un error al evaluar el archivo:\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Opcional: Si ocurre un error, asegúrate de que el botón de descarga no se muestre
+                boton_archivo.Visible = false;
             }
         }
 

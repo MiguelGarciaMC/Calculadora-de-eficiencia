@@ -35,6 +35,8 @@
             label_titulo = new Label();
             label_descripcion = new Label();
             panel_archivo = new Panel();
+            label1 = new Label();
+            label_Haz_clic_en_Realizar_Evaluación = new Label();
             richTextBox1 = new RichTextBox();
             pictureBox1 = new PictureBox();
             boton_evaluar = new Button();
@@ -50,7 +52,7 @@
             // 
             // imagen_titulo
             // 
-            imagen_titulo.Image = Properties.Resources.Imagen_de_portada_removebg_preview;
+            imagen_titulo.Image = (Image)resources.GetObject("imagen_titulo.Image");
             imagen_titulo.Location = new Point(381, 20);
             imagen_titulo.Name = "imagen_titulo";
             imagen_titulo.Size = new Size(406, 361);
@@ -60,12 +62,22 @@
             // 
             // boton_cargar
             // 
+            boton_cargar.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            boton_cargar.AutoSize = true;
+            boton_cargar.BackColor = Color.BlueViolet;
+            boton_cargar.Cursor = Cursors.Hand;
+            boton_cargar.FlatAppearance.BorderSize = 5;
+            boton_cargar.FlatStyle = FlatStyle.Popup;
+            boton_cargar.Font = new Font("Segoe UI Semibold", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            boton_cargar.ForeColor = Color.White;
             boton_cargar.Location = new Point(100, 358);
+            boton_cargar.Margin = new Padding(0);
             boton_cargar.Name = "boton_cargar";
-            boton_cargar.Size = new Size(128, 23);
+            boton_cargar.Size = new Size(165, 50);
             boton_cargar.TabIndex = 3;
             boton_cargar.Text = "Cargar archivo .CS";
-            boton_cargar.UseVisualStyleBackColor = true;
+            boton_cargar.TextImageRelation = TextImageRelation.ImageAboveText;
+            boton_cargar.UseVisualStyleBackColor = false;
             boton_cargar.Click += boton_cargar_Click;
             // 
             // panel_inicio
@@ -86,11 +98,11 @@
             label_titulo.Name = "label_titulo";
             label_titulo.Size = new Size(308, 121);
             label_titulo.TabIndex = 4;
-            label_titulo.Text = "!Bienvenido a nuesta calculadora de eficiencia!";
+            label_titulo.Text = "¡Bienvenido a nuesta calculadora de eficiencia!";
             // 
             // label_descripcion
             // 
-            label_descripcion.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label_descripcion.Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold | FontStyle.Italic, GraphicsUnit.Point, 0);
             label_descripcion.Location = new Point(21, 193);
             label_descripcion.Name = "label_descripcion";
             label_descripcion.Size = new Size(308, 122);
@@ -100,6 +112,8 @@
             // panel_archivo
             // 
             panel_archivo.BackColor = SystemColors.Window;
+            panel_archivo.Controls.Add(label1);
+            panel_archivo.Controls.Add(label_Haz_clic_en_Realizar_Evaluación);
             panel_archivo.Controls.Add(richTextBox1);
             panel_archivo.Controls.Add(pictureBox1);
             panel_archivo.Controls.Add(boton_evaluar);
@@ -113,73 +127,114 @@
             panel_archivo.TabIndex = 6;
             panel_archivo.Visible = false;
             // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Font = new Font("Segoe UI Semibold", 11.25F, FontStyle.Bold | FontStyle.Italic, GraphicsUnit.Point, 0);
+            label1.Location = new Point(20, 230);
+            label1.Name = "label1";
+            label1.Size = new Size(383, 60);
+            label1.TabIndex = 7;
+            label1.Text = "Haz clic para descargar un archivo .txt que contiene el\r\nresultado detallado del número y tipo de operaciones\r\ndetectadas.";
+            label1.TextAlign = ContentAlignment.MiddleLeft;
+            // 
+            // label_Haz_clic_en_Realizar_Evaluación
+            // 
+            label_Haz_clic_en_Realizar_Evaluación.AutoSize = true;
+            label_Haz_clic_en_Realizar_Evaluación.Font = new Font("Segoe UI Semibold", 11.25F, FontStyle.Bold | FontStyle.Italic, GraphicsUnit.Point, 0);
+            label_Haz_clic_en_Realizar_Evaluación.Location = new Point(20, 146);
+            label_Haz_clic_en_Realizar_Evaluación.Name = "label_Haz_clic_en_Realizar_Evaluación";
+            label_Haz_clic_en_Realizar_Evaluación.Size = new Size(409, 60);
+            label_Haz_clic_en_Realizar_Evaluación.TabIndex = 7;
+            label_Haz_clic_en_Realizar_Evaluación.Text = "Haz clic en ‘Realizar Evaluación’ para obtener un resumen\r\ndel número de operaciones totales y los diferentes tipos\r\nde operaciones identificadas en el análisis del código.";
+            label_Haz_clic_en_Realizar_Evaluación.TextAlign = ContentAlignment.MiddleLeft;
+            // 
             // richTextBox1
             // 
-            richTextBox1.Location = new Point(32, 118);
+            richTextBox1.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            richTextBox1.Location = new Point(435, 55);
             richTextBox1.Name = "richTextBox1";
-            richTextBox1.Size = new Size(245, 262);
+            richTextBox1.Size = new Size(340, 370);
             richTextBox1.TabIndex = 6;
             richTextBox1.Text = "";
             // 
             // pictureBox1
             // 
-            pictureBox1.Image = Properties.Resources.Captura_de_pantalla_2025_07_16_091731;
-            pictureBox1.Location = new Point(699, 12);
+            pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
+            pictureBox1.Location = new Point(20, 12);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(87, 65);
+            pictureBox1.Size = new Size(170, 58);
+            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox1.TabIndex = 5;
             pictureBox1.TabStop = false;
             // 
             // boton_evaluar
             // 
-            boton_evaluar.Location = new Point(380, 92);
+            boton_evaluar.BackColor = Color.BlueViolet;
+            boton_evaluar.Cursor = Cursors.Hand;
+            boton_evaluar.FlatStyle = FlatStyle.Flat;
+            boton_evaluar.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            boton_evaluar.ForeColor = Color.White;
+            boton_evaluar.Location = new Point(20, 326);
             boton_evaluar.Name = "boton_evaluar";
-            boton_evaluar.Size = new Size(75, 23);
+            boton_evaluar.Size = new Size(93, 37);
             boton_evaluar.TabIndex = 4;
             boton_evaluar.Text = "Evaluar";
-            boton_evaluar.UseVisualStyleBackColor = true;
+            boton_evaluar.UseVisualStyleBackColor = false;
             boton_evaluar.Click += boton_evaluar_Click;
             // 
             // laber_resultado
             // 
             laber_resultado.AutoSize = true;
-            laber_resultado.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            laber_resultado.Location = new Point(118, 94);
+            laber_resultado.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            laber_resultado.Location = new Point(548, 19);
             laber_resultado.Name = "laber_resultado";
-            laber_resultado.Size = new Size(75, 17);
+            laber_resultado.Size = new Size(108, 25);
             laber_resultado.TabIndex = 3;
             laber_resultado.Text = "Resultados";
             // 
             // boton_archivo
             // 
-            boton_archivo.Location = new Point(626, 218);
+            boton_archivo.BackColor = Color.BlueViolet;
+            boton_archivo.Cursor = Cursors.Hand;
+            boton_archivo.FlatStyle = FlatStyle.Flat;
+            boton_archivo.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            boton_archivo.ForeColor = Color.White;
+            boton_archivo.Location = new Point(226, 326);
             boton_archivo.Name = "boton_archivo";
-            boton_archivo.Size = new Size(133, 23);
+            boton_archivo.Size = new Size(177, 37);
             boton_archivo.TabIndex = 2;
-            boton_archivo.Text = "Descargar archivo txt";
-            boton_archivo.UseVisualStyleBackColor = true;
+            boton_archivo.Text = "Descargar archivo .txt";
+            boton_archivo.UseVisualStyleBackColor = false;
+            boton_archivo.Visible = false;
             boton_archivo.Click += boton_archivo_Click;
             // 
             // label_descargarArchivo
             // 
             label_descargarArchivo.AutoEllipsis = true;
             label_descargarArchivo.AutoSize = true;
-            label_descargarArchivo.Font = new Font("Segoe UI Semibold", 14.25F, FontStyle.Bold | FontStyle.Italic, GraphicsUnit.Point, 0);
-            label_descargarArchivo.Location = new Point(334, 45);
+            label_descargarArchivo.Font = new Font("Segoe UI Semibold", 11.25F, FontStyle.Bold | FontStyle.Italic, GraphicsUnit.Point, 0);
+            label_descargarArchivo.Location = new Point(20, 95);
             label_descargarArchivo.Name = "label_descargarArchivo";
-            label_descargarArchivo.Size = new Size(198, 25);
+            label_descargarArchivo.Size = new Size(157, 20);
             label_descargarArchivo.TabIndex = 1;
             label_descargarArchivo.Text = "Nombre del archivo...";
             label_descargarArchivo.TextAlign = ContentAlignment.TopCenter;
             // 
             // boton_regresar
             // 
-            boton_regresar.Location = new Point(380, 357);
+            boton_regresar.AutoSize = true;
+            boton_regresar.BackColor = Color.Indigo;
+            boton_regresar.Cursor = Cursors.Hand;
+            boton_regresar.FlatStyle = FlatStyle.Flat;
+            boton_regresar.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            boton_regresar.ForeColor = Color.White;
+            boton_regresar.Location = new Point(129, 403);
             boton_regresar.Name = "boton_regresar";
-            boton_regresar.Size = new Size(75, 23);
+            boton_regresar.Size = new Size(83, 35);
             boton_regresar.TabIndex = 0;
             boton_regresar.Text = "Regresar";
-            boton_regresar.UseVisualStyleBackColor = true;
+            boton_regresar.UseVisualStyleBackColor = false;
             boton_regresar.Click += boton_regresar_Click_1;
             // 
             // Form1
@@ -190,12 +245,15 @@
             ClientSize = new Size(800, 450);
             Controls.Add(panel_archivo);
             Controls.Add(panel_inicio);
+            FormBorderStyle = FormBorderStyle.Fixed3D;
             Icon = (Icon)resources.GetObject("$this.Icon");
+            MaximizeBox = false;
             Name = "Form1";
             Text = "Calculadora de eficiencia";
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)imagen_titulo).EndInit();
             panel_inicio.ResumeLayout(false);
+            panel_inicio.PerformLayout();
             panel_archivo.ResumeLayout(false);
             panel_archivo.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
@@ -220,5 +278,7 @@
         private Button boton_evaluar;
         private PictureBox pictureBox1;
         private RichTextBox richTextBox1;
+        private Label label_Haz_clic_en_Realizar_Evaluación;
+        private Label label1;
     }
 }
