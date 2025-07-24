@@ -32,11 +32,11 @@ namespace Calculadora_de_eficiencia.Services
         {
             if (string.IsNullOrWhiteSpace(expresion))
             {
-                ConsolaVirtual.Escribir("Expresión vacía. No hay análisis de límite.");
+                //ConsolaVirtual.Escribir("Expresión vacía. No hay análisis de límite.");
                 return;
             }
 
-            ConsolaVirtual.Escribir("\n--- Análisis de Complejidad Asintótica ---");
+            //ConsolaVirtual.Escribir("\n--- Análisis de Complejidad Asintótica ---");
 
             try
             {
@@ -44,29 +44,29 @@ namespace Calculadora_de_eficiencia.Services
                                           .Replace("[", "(")
                                           .Replace("n(", "n*(");
 
-                ConsolaVirtual.Escribir($"Expresión cruda: {exprStr}");
+                //ConsolaVirtual.Escribir($"Expresión cruda: {exprStr}");
 
                 var parsed = Expr.Parse(exprStr);
                 Expression exprMath = parsed.Expression;
                 Expression simplified = Algebraic.Expand(exprMath);
 
                 string simplificadaStr = Infix.Format(simplified);
-                ConsolaVirtual.Escribir("Expresión simplificada: " + simplificadaStr);
+                //ConsolaVirtual.Escribir("Expresión simplificada: " + simplificadaStr);
 
                 // Nuevo método para determinar el orden y el límite
                 var (order, exponent) = GetComplexityOrderAndExponent(simplificadaStr);
 
                 // Calcular Límite
                 string limite = CalcularLimiteBasadoEnOrden(order, exponent);
-                ConsolaVirtual.Escribir($"Límite cuando n → ∞: {limite}");
+                //ConsolaVirtual.Escribir($"Límite cuando n → ∞: {limite}");
 
                 // Estimar Cota Asintótica (Big O)
                 EstimarCotaBasadoEnOrden(order, exponent);
             }
             catch (Exception ex)
             {
-                ConsolaVirtual.Escribir($"Error al analizar complejidad: {ex.Message}");
-                ConsolaVirtual.Escribir($"Detalles: {ex.StackTrace}");
+                //ConsolaVirtual.Escribir($"Error al analizar complejidad: {ex.Message}");
+                //ConsolaVirtual.Escribir($"Detalles: {ex.StackTrace}");
             }
         }
 
@@ -127,36 +127,36 @@ namespace Calculadora_de_eficiencia.Services
 
         private static void EstimarCotaBasadoEnOrden(ComplexityOrder order, double exponent)
         {
-            ConsolaVirtual.Escribir("\n--- Cota asintótica (Big O) ---");
+            //ConsolaVirtual.Escribir("\n--- Cota asintótica (Big O) ---");
 
             switch (order)
             {
                 case ComplexityOrder.Factorial:
-                    ConsolaVirtual.Escribir("Cota superior: O(n!)");
+                    //ConsolaVirtual.Escribir("Cota superior: O(n!)");
                     break;
                 case ComplexityOrder.Exponential:
-                    ConsolaVirtual.Escribir("Cota superior: O(b^n) - Exponencial");
+                    //ConsolaVirtual.Escribir("Cota superior: O(b^n) - Exponencial");
                     break;
                 case ComplexityOrder.Polynomial:
-                    ConsolaVirtual.Escribir($"Cota superior: O(n^{exponent}) - Polinomial");
+                    //ConsolaVirtual.Escribir($"Cota superior: O(n^{exponent}) - Polinomial");
                     break;
                 case ComplexityOrder.Quadratic:
-                    ConsolaVirtual.Escribir("Cota superior: O(n^2) - Cuadrática");
+                    //ConsolaVirtual.Escribir("Cota superior: O(n^2) - Cuadrática");
                     break;
                 case ComplexityOrder.NLogN:
-                    ConsolaVirtual.Escribir("Cota superior: O(n log n)");
+                    //ConsolaVirtual.Escribir("Cota superior: O(n log n)");
                     break;
                 case ComplexityOrder.Linear:
-                    ConsolaVirtual.Escribir("Cota superior: O(n) - Lineal");
+                    //ConsolaVirtual.Escribir("Cota superior: O(n) - Lineal");
                     break;
                 case ComplexityOrder.Logarithmic:
-                    ConsolaVirtual.Escribir("Cota superior: O(log n) - Logarítmica");
+                    //ConsolaVirtual.Escribir("Cota superior: O(log n) - Logarítmica");
                     break;
                 case ComplexityOrder.Constant:
-                    ConsolaVirtual.Escribir("Cota superior: O(1) - Constante");
+                    //ConsolaVirtual.Escribir("Cota superior: O(1) - Constante");
                     break;
                 default:
-                    ConsolaVirtual.Escribir("Cota superior: Indeterminada");
+                    //ConsolaVirtual.Escribir("Cota superior: Indeterminada");
                     break;
             }
         }
@@ -225,7 +225,6 @@ namespace Calculadora_de_eficiencia.Services
                 }
             }
 
-            ConsolaVirtual.Escribir("\nSuma Total Final:");
             var totalFinal = new StringBuilder("T(n) simplificada total = ");
             bool esPrimero = true;
 
@@ -256,9 +255,12 @@ namespace Calculadora_de_eficiencia.Services
             }
 
             if (esPrimero)
-                ConsolaVirtual.Escribir("T(n) simplificada total = 0");
+            {
+                //ConsolaVirtual.Escribir("T(n) simplificada total = 0");
+            }
+                
             else
-                ConsolaVirtual.Escribir(totalFinal.ToString());
+                //ConsolaVirtual.Escribir(totalFinal.ToString());
 
             // Opcional: analizar límite sólo si no hay recursividad
             if (terminosRecursivos.Count == 0)
@@ -276,35 +278,44 @@ namespace Calculadora_de_eficiencia.Services
             }
             else
             {
-                ConsolaVirtual.Escribir("\n[⚠️] Advertencia en el análisis del límite por presencia de términos recursivos.");
+                //ConsolaVirtual.Escribir("\n[⚠️] Advertencia en el análisis del límite por presencia de términos recursivos.");
             }
         }
 
         public static void MostrarRecurrenciaYCota(string expresion)
         {
-            ConsolaVirtual.Escribir($"T(n) = {expresion}");
+            //ConsolaVirtual.Escribir($"T(n) = {expresion}");
 
             // Detectar patrones simples de recurrencia y mostrar cota
             if (Regex.IsMatch(expresion, @"T\(n\s*-\s*1\)"))
             {
-                ConsolaVirtual.Escribir("Cota estimada: O(n) (recurrencia lineal tipo T(n) = T(n-1) + c)");
+                //ConsolaVirtual.Escribir("Cota estimada: O(n) (recurrencia lineal tipo T(n) = T(n-1) + c)");
             }
             else if (Regex.IsMatch(expresion, @"T\(n\s*/\s*2\)"))
             {
                 if (Regex.IsMatch(expresion, @"\+.*n\s*\*?\s*log\(n\)", RegexOptions.IgnoreCase))
-                    ConsolaVirtual.Escribir("Cota estimada: O(n log n) (recurrencia tipo divide y vencerás)");
+                {
+                    //ConsolaVirtual.Escribir("Cota estimada: O(n log n) (recurrencia tipo divide y vencerás)");
+                }
+                    
                 else if (Regex.IsMatch(expresion, @"\+.*n", RegexOptions.IgnoreCase))
-                    ConsolaVirtual.Escribir("Cota estimada: O(n) (recurrencia tipo T(n) = 2T(n/2) + n)");
+                {
+                    //ConsolaVirtual.Escribir("Cota estimada: O(n) (recurrencia tipo T(n) = 2T(n/2) + n)\");
+                }
+
                 else
-                    ConsolaVirtual.Escribir("Cota estimada: O(log n) (recurrencia tipo T(n) = T(n/2) + c)");
+                {
+                    //ConsolaVirtual.Escribir("Cota estimada: O(log n) (recurrencia tipo T(n) = T(n/2) + c)");
+                }
+
             }
             else if (Regex.IsMatch(expresion, @"T\(n\)"))
             {
-                ConsolaVirtual.Escribir("Cota estimada: No determinada (expresión con términos recursivos generales).");
+                //ConsolaVirtual.Escribir("Cota estimada: No determinada (expresión con términos recursivos generales).");
             }
             else
             {
-                ConsolaVirtual.Escribir("No se detectaron términos recursivos para analizar.");
+                //ConsolaVirtual.Escribir("No se detectaron términos recursivos para analizar.");
             }
         }
 
